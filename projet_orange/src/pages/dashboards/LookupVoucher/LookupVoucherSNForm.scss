@@ -1,0 +1,109 @@
+.main-content {
+  margin-left: 250px; // Adjust for sidebar
+  flex: 1;
+  background-color: #f5f2f8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding: 2rem;
+}
+
+.msisdn-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 3rem;
+  width: 100%;
+  max-width: 600px;
+
+  h2 {
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    color: #222;
+    text-align: center;
+    font-weight: 600;
+  }
+}
+
+.msisdn-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  height: 56px;
+  overflow: hidden;
+
+  input {
+    flex: 1;
+    padding: 0 1rem;
+    border: none;
+    font-size: 1.1rem;
+    outline: none;
+    height: 100%;
+    background: transparent;
+
+    &::placeholder {
+      color: #999;
+      font-size: 1.1rem;
+    }
+
+    &:focus {
+      background-color: #fafafa;
+    }
+  }
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+
+  button {
+    min-width: 120px;
+    padding: 0.9rem 2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    display: inline-block;
+    line-height: 1;
+
+    &:hover {
+      opacity: 0.95;
+    }
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .send {
+    background-color: #ff6600;
+    color: #fff;
+
+    &:hover {
+      background-color: #e65c00;
+    }
+  }
+
+  .clear {
+    background-color: #333;
+    color: #fff;
+
+    &:hover {
+      background-color: #555;
+    }
+  }
+}
+
+
+.send:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  color: #666;
+}

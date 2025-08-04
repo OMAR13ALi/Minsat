@@ -1,0 +1,166 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.layout {
+  display: grid;
+  grid-template-areas: 
+    "navbar navbar"
+    "sidebar main";
+  grid-template-columns: var(--sidebar-width, 250px) 1fr;
+  grid-template-rows: 60px 1fr;
+  height: 100vh;
+  --sidebar-width: 250px;
+}
+
+/* Navbar */
+.navbar {
+  grid-area: navbar;
+  background-color: #fff;
+  border-bottom: 1px solid #e0e0e0;
+  z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+}
+
+/* Sidebar */
+.sidebar {
+  grid-area: sidebar;
+  background-color: #fff;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+  position: fixed;
+  left: 0;
+  top: 60px;
+  width: var(--sidebar-width);
+  height: calc(100vh - 60px);
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
+
+/* Main content area */
+.main-content {
+  grid-area: main;
+  background-color: #f5f2f8;
+  overflow-y: auto;
+  margin-left: var(--sidebar-width);
+  margin-top: 60px;
+  min-height: calc(100vh - 60px);
+  transition: margin-left 0.3s ease;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+  .layout {
+    --sidebar-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-areas: 
+      "navbar navbar"
+      "main main";
+    grid-template-columns: 1fr;
+    --sidebar-width: 0px;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0;
+  }
+}
+
+/* Sidebar collapsed state */
+.layout.sidebar-collapsed {
+  --sidebar-width: 60px;
+}
+
+.layout.sidebar-collapsed .sidebar {
+  width: 60px;
+}
+
+.layout.sidebar-collapsed .main-content {
+  margin-left: 60px;
+}
+
+/* Optional: Add overlay for mobile */
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+  
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* Keep your existing logo styles */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}

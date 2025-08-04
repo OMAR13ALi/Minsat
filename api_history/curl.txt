@@ -1,0 +1,1 @@
+curl -X GET "http://10.13.67.20/shrMA.pub?msisdn=21620479000&startDate=2023-06-05&transactionTypes=adjustmentMA,cDRMA,aIRSRefillMA,pAMEvaluationMA" -H "User-Agent: minsat/4.1/1.0" -H "Authorization: Basic bWluc2F0MTptaW5zYXQxMjM="

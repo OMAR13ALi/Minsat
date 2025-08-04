@@ -1,0 +1,93 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100px;
+  background-color: #fff7ed;
+  border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 50px;
+  box-sizing: border-box;
+  z-index: 1000;
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 100%;
+
+    img {
+      height: 96px;
+      width: auto;
+      margin-left:-30px;
+      outline: none;
+      border: none;
+      box-shadow: none;
+      cursor: pointer; // ✅ Curseur main
+      transition: transform 0.2s ease;
+
+      outline: none;
+      border: none;
+      box-shadow: none;
+
+      &:hover {
+        transform: scale(1.05); // ✅ Effet doux optionnel
+      }
+    }
+
+    span {
+      font-size: 60px; // ✅ Plus grand texte "minsat."
+      font-weight: bold;
+      color: #f97316;
+      line-height: 100px; // ✅ Aligner verticalement avec le navbar
+      display: flex;
+      align-items: center;
+      height: 100%;
+      user-select: none;
+    }
+  }
+
+  .profile-section {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .profile-img {
+      height: 70px;
+      width: 70px;
+      border-radius: 50%;
+      cursor: pointer;
+      object-fit: cover;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: 80px;
+      right: 0;
+      background-color: white;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      min-width: 150px;
+      z-index: 1000;
+
+      span {
+        padding: 10px;
+        cursor: pointer;
+        font-size: 16px;
+
+        &:hover {
+          background-color: #f97316;
+          color: white;
+        }
+      }
+    }
+  }
+}

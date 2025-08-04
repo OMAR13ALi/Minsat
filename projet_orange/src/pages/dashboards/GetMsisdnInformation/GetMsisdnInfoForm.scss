@@ -1,0 +1,141 @@
+.main-content {
+  margin-left: 250px; // Compense la sidebar
+  flex: 1;
+  background-color: #f5f2f8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; // Hauteur complète de l'écran
+  padding: 2rem;
+}
+
+.msisdn-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 3rem;
+  width: 100%;
+  max-width: 600px; // Plus large
+  
+  h2 {
+    margin-bottom: 2rem;
+    font-size: 1.8rem; // Plus gros titre
+    color: #222;
+    text-align: center;
+    font-weight: 600;
+  }
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+  display: block;
+  color: #333;
+  font-size: 1.1rem; // Plus gros label
+}
+
+.msisdn-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem; // Plus d'espace
+  border: 2px solid #ddd; // Bordure plus épaisse
+  border-radius: 8px;
+  overflow: hidden;
+  height: 56px; // Plus haut
+
+  .prefix {
+    display: flex;
+    align-items: center;
+    background-color: #f8f8f8;
+    padding: 0 1rem; // Plus de padding
+    height: 100%;
+    border-right: 2px solid #ddd;
+    min-width: 90px; // Plus large
+    justify-content: center;
+
+    img {
+      width: 22px; // Plus grande image
+      height: 16px;
+      margin-right: 8px;
+    }
+
+    span {
+      font-weight: 600;
+      color: #333;
+      font-size: 1rem; // Plus gros texte
+    }
+  }
+
+  input {
+    flex: 1;
+    padding: 0 1rem; // Plus de padding
+    border: none;
+    font-size: 1.1rem; // Plus gros texte
+    outline: none;
+    height: 100%;
+    background: transparent;
+
+    &::placeholder {
+      color: #999;
+      font-size: 1.1rem;
+    }
+
+    &:focus {
+      background-color: #fafafa;
+    }
+  }
+}
+
+.button-group {
+  display: flex;
+  gap: 1.5rem; // Plus d'espace entre les boutons
+  justify-content: center;
+
+  button {
+    min-width: 120px; // Plus larges
+    padding: 0.9rem 2rem; // Plus de padding
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem; // Plus gros texte
+    transition: all 0.2s ease;
+
+    &:active {
+      transform: translateY(1px);
+    }
+  }
+
+  .send {
+    background-color: #ff6600;
+    color: #fff;
+
+    &:hover {
+      background-color: #e65c00;
+    }
+  }
+
+  .clear {
+    background-color: #333;
+    color: #fff;
+
+    &:hover {
+      background-color: #555;
+    }
+  }
+}
+
+
+.error-message {
+  color: #e63946;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+.send:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  color: #666;
+}
+
+
