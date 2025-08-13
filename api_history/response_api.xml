@@ -32,6 +32,8 @@
 <promotionPlanId>1</promotionPlanId>
 <mainAccountBalance currency="0">21</mainAccountBalance>
 <accountStatus>10000000</accountStatus>
+<voucherSerialNumber>501750880052</voucherSerialNumber>
+<activationCode>55329259557605</activationCode>
 <voucherGroup>CB</voucherGroup>
 <creditClearanceGracePeriod>999</creditClearanceGracePeriod>
 <serviceRemovalGracePeriod>999</serviceRemovalGracePeriod>
@@ -65,6 +67,8 @@
 <promotionPlanId>1</promotionPlanId>
 <mainAccountBalance currency="0">26</mainAccountBalance>
 <accountStatus>10000000</accountStatus>
+<voucherSerialNumber>501750855022</voucherSerialNumber>
+<activationCode>55329254577605</activationCode>
 <voucherGroup>CT</voucherGroup>
 <creditClearanceGracePeriod>999</creditClearanceGracePeriod>
 <serviceRemovalGracePeriod>999</serviceRemovalGracePeriod>
@@ -95,6 +99,8 @@
 <nominalAmount currency="0">0</nominalAmount>
 <promotionPlanId>1</promotionPlanId>
 <accountStatus>10000000</accountStatus>
+<voucherSerialNumber>501750742052</voucherSerialNumber>
+<activationCode>55374259557605</activationCode>
 <voucherGroup>OR28</voucherGroup>
 <creditClearanceGracePeriod>999</creditClearanceGracePeriod>
 <serviceRemovalGracePeriod>999</serviceRemovalGracePeriod>
@@ -126,6 +132,8 @@
 <nominalAmount currency="0">5</nominalAmount>
 <promotionPlanId>1</promotionPlanId>
 <accountStatus>10000000</accountStatus>
+<voucherSerialNumber>501712880052</voucherSerialNumber>
+<activationCode>55329259227605</activationCode>
 <voucherGroup>TSA</voucherGroup>
 <creditClearanceGracePeriod>999</creditClearanceGracePeriod>
 <serviceRemovalGracePeriod>999</serviceRemovalGracePeriod>

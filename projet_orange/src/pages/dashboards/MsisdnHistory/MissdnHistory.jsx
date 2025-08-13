@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, Calendar } from 'lucide-react';
 
@@ -10,15 +11,17 @@ const MsisdnHistory = () => {
   const [daIdFilter, setDaIdFilter] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [userRole, setUserRole] = useState('agentDSC'); // Default role for demo
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const [historyData, setHistoryData] = useState([]);
   const [rawData, setRawData] = useState({});
-  
+  const [lastFetchedMsisdn, setLastFetchedMsisdn] = useState('');
+
   // Refs to track matching elements
   const matchingElementsRef = useRef([]);
   const daIdInputRef = useRef(null);
 
-  const serviceOptions = ['PAM', 'Refill', 'SMS', 'Voice', 'Data'];
+  const serviceOptions = ['PAM', 'Adjustment', 'Refill', 'SMS', 'Voice', 'Data'];
 
   const contextMap = (ctx) => {
     if (ctx === "CAPv2_V.1.0@ericsson.com" || ctx === "CAP_V.1.0@ericsson.com") return "Voice";
@@ -27,10 +30,9 @@ const MsisdnHistory = () => {
     return ctx;
   };
 
-  
   const formatLocationNumber = (locationNumber) => {
     if (!locationNumber || locationNumber === '-') return '-';
-    
+
     const numStr = locationNumber.toString();
     if (numStr.startsWith('21650') || numStr.startsWith('6050')) {
       return 'NATIONAL';
@@ -38,12 +40,11 @@ const MsisdnHistory = () => {
     return 'INTERNATIONAL';
   };
 
-
   const formatBNumber = (bNumber, role) => {
     if (!bNumber || bNumber === '-') return '-';
-    
+
     const numStr = bNumber.toString();
-    
+
     // If role is agentDSC, mask the number
     if (role === 'agentDSC') {
       if (numStr.length > 5) {
@@ -53,86 +54,193 @@ const MsisdnHistory = () => {
         return visiblePart + maskedPart;
       }
     }
-    
+
     // For agent IN or other roles, show the full number
     return numStr;
   };
 
+  // New function to format the Used Units column with two fields
+  const formatUsedUnits = (row) => {
+    const paymentProfile = row.paymentProfile || '';
+    const originNodeId = row.originNodeId || '';
+    const duration = row.duration || '';
+    const usedUnits = row.usedUnits || '';
+    const dataVolume = row.dataVolume || '';
+
+    // If we have duration, usedUnits, or dataVolume, show them along with the two new fields
+    const primaryValue = duration || usedUnits || dataVolume || '-';
+
+    return {
+      primaryValue,
+      paymentProfile,
+      originNodeId
+    };
+  };
+
+  // New function to format B Number section with fallback fields
+  const formatBNumberSection = (row, role) => {
+    const bNumber = row.bNumber || row.bNumberVoucher;
+
+    if (bNumber && bNumber !== '-') {
+      return {
+        primaryValue: formatBNumber(bNumber, role),
+        activationCode: null,
+        voucherSerialNumber: null
+      };
+    }
+
+    // If no B Number, show activation code and voucher serial number
+    const activationCode = row.activationCode || '';
+    const voucherSerialNumber = row.voucherSerialNumber || '';
+
+    return {
+      primaryValue: '-',
+      activationCode,
+      voucherSerialNumber
+    };
+  };
 
   const parseDate = (str) => {
     const [year, month, day] = str.split('-');
-    return new Date(`${year}-${month}-${day}T00:00:00`);
+    return new Date(`${year}-${month}-${day}`);
   };
 
   const isInDateRange = (dateStr) => {
-    const date = new Date(dateStr);
-    const start = startDate ? parseDate(startDate) : null;
-    const end = endDate ? parseDate(endDate) : null;
+    if (!dateStr) return true; // If no date, include it
+    
+    try {
+      const date = new Date(dateStr);
+      const start = startDate ? parseDate(startDate) : null;
+      const end = endDate ? parseDate(endDate) : null;
 
-    if (end) end.setHours(23, 59, 59, 999);
-    return (!start || date >= start) && (!end || date <= end);
+      if (end) end.setHours(23, 59, 59, 999);
+      return (!start || date >= start) && (!end || date <= end);
+    } catch (error) {
+      console.warn('Invalid date format:', dateStr);
+      return true; // Include invalid dates to avoid losing data
+    }
   };
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       const msisdnFull = msisdn.startsWith('216') ? msisdn : `216${msisdn}`;
+      console.log('🔍 Fetching data for MSISDN:', msisdnFull);
+      
       const response = await fetch('http://localhost:5000/history/transactionByNumber', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ msisdn: msisdnFull, startDate: '', endDate: '' }),
+        body: JSON.stringify({ 
+          msisdn: msisdnFull, 
+          startDate: startDate || '', 
+          endDate: endDate || '' 
+        }),
       });
 
-      if (!response.ok) throw new Error('Failed to fetch data');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
       const data = await response.json();
+      console.log('✅ Raw data received:', data);
+      
+      // Store the raw data and the MSISDN used to fetch it
       setRawData(data);
+      setLastFetchedMsisdn(msisdnFull);
+      
       return data;
     } catch (error) {
       console.error('❌ Error fetching data:', error);
       setHistoryData([]);
       return {};
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const filterDataByService = (data, service) => {
-    if (service === 'PAM') {
-      return (data.PAM || []).filter(d => isInDateRange(d.transactionDateTime));
-    } else if (service === 'Refill') {
-      return (data.Refill || []).filter(r => isInDateRange(r.transactionDateTime));
-    } else if (service === 'Voice') {
-      return (data.Usage || []).filter(entry =>
-        ['0', '1'].includes(String(entry.serviceIdentifier)) &&
-        entry.chargingContext === 'CAPv2_V.1.0@ericsson.com' &&
-        isInDateRange(entry.transactionDateTime)
-      );
-    } else if (service === 'SMS') {
-      return (data.Usage || []).filter(entry =>
-        ['0', '1'].includes(String(entry.serviceIdentifier)) &&
-        entry.chargingContext === 'SCAP_V.2.0@ericsson.com' &&
-        isInDateRange(entry.transactionDateTime)
-      );
-    } else if (service === 'Data') {
-      return (data.Usage || []).filter(entry =>
-        entry.chargingContext === 'Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org' &&
-        isInDateRange(entry.transactionDateTime)
-      );
+    console.log('🔄 Filtering data by service:', service);
+    console.log('🔄 Available data keys:', Object.keys(data));
+    
+    let filtered = [];
+    
+    try {
+      if (service === 'PAM') {
+        filtered = (data.PAM || []).filter(d => {
+          const inRange = isInDateRange(d.transactionDateTime);
+          return inRange;
+        });
+      } else if (service === 'Adjustment') {
+        filtered = (data.SDPAdjustment || []).filter(l => {
+          const inRange = isInDateRange(l.transactionDateTime);
+          return inRange;
+        });
+      } else if (service === 'Refill') {
+        filtered = (data.Refill || []).filter(r => {
+          const inRange = isInDateRange(r.transactionDateTime);
+          return inRange;
+        });
+      } else if (service === 'Voice') {
+        filtered = (data.Usage || []).filter(entry => {
+          const isVoice = ['0', '1'].includes(String(entry.serviceIdentifier)) &&
+            entry.chargingContext === 'CAPv2_V.1.0@ericsson.com';
+          const inRange = isInDateRange(entry.transactionDateTime);
+          return isVoice && inRange;
+        });
+      } else if (service === 'SMS') {
+        filtered = (data.Usage || []).filter(entry => {
+          const isSMS = entry.chargingContext === 'SCAP_V.2.0@ericsson.com';
+          const inRange = isInDateRange(entry.transactionDateTime);
+          return isSMS && inRange;
+        });
+      } else if (service === 'Data') {
+        filtered = (data.Usage || []).filter(entry => {
+          const isData = entry.chargingContext === 'Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org';
+          const inRange = isInDateRange(entry.transactionDateTime);
+          return isData && inRange;
+        });
+      }
+      
+      console.log('✅ Filtered results:', filtered.length, 'items');
+      return filtered;
+    } catch (error) {
+      console.error('❌ Error filtering data:', error);
+      return [];
     }
-    return [];
   };
 
   const handleSearch = async () => {
+    console.log('🚀 Starting search...');
     const data = await fetchData();
-    const filtered = filterDataByService(data, selectedService);
-    setHistoryData(filtered);
+    if (Object.keys(data).length > 0) {
+      const filtered = filterDataByService(data, selectedService);
+      setHistoryData(filtered);
+      console.log('✅ Search completed. History data set:', filtered.length, 'items');
+    }
   };
 
+  // Only filter when service changes, but keep existing data
   useEffect(() => {
-    if (Object.keys(rawData).length) {
+    console.log('🔄 Service or date filter changed:', selectedService);
+    if (Object.keys(rawData).length > 0) {
       const filtered = filterDataByService(rawData, selectedService);
       setHistoryData(filtered);
+      console.log('✅ Data re-filtered:', filtered.length, 'items');
     }
-  }, [selectedService]);
+  }, [selectedService, startDate, endDate]); // Added startDate and endDate as dependencies
+
+  // Separate useEffect for rawData changes to avoid conflicts
+  useEffect(() => {
+    if (Object.keys(rawData).length > 0) {
+      const filtered = filterDataByService(rawData, selectedService);
+      setHistoryData(filtered);
+      console.log('✅ Raw data processed:', filtered.length, 'items');
+    }
+  }, [rawData]);
 
   const handleClear = () => {
+    console.log('🧹 Clearing all data...');
     setMsisdn('');
     setStartDate('');
     setEndDate('');
@@ -142,16 +250,17 @@ const MsisdnHistory = () => {
     setCurrentMatchIndex(0);
     setHistoryData([]);
     setRawData({});
+    setLastFetchedMsisdn('');
     matchingElementsRef.current = [];
   };
 
   // Count total matches and update matching elements
   const countMatches = () => {
     if (!daIdFilter) return 0;
-    
+
     let count = 0;
     const elements = [];
-    
+
     historyData.forEach((row, rowIndex) => {
       if (row.details) {
         try {
@@ -176,7 +285,7 @@ const MsisdnHistory = () => {
         }
       }
     });
-    
+
     matchingElementsRef.current = elements;
     return count;
   };
@@ -186,40 +295,24 @@ const MsisdnHistory = () => {
   // Navigate to next match
   const navigateToNextMatch = () => {
     if (totalMatches === 0) return;
-    
+
     const nextIndex = (currentMatchIndex + 1) % totalMatches;
     setCurrentMatchIndex(nextIndex);
-    
+
     // Scroll to the element
     const targetMatch = matchingElementsRef.current[nextIndex];
     if (targetMatch) {
       setTimeout(() => {
         const element = document.getElementById(targetMatch.elementId);
         if (element) {
-          const mainContent = document.querySelector('.main-content');
-          
-          if (mainContent) {
-            // Get element position relative to the main content
-            const elementRect = element.getBoundingClientRect();
-            const mainContentRect = mainContent.getBoundingClientRect();
-            
-            // Calculate the scroll position with a proper offset
-            const offsetTop = elementRect.top - mainContentRect.top + mainContent.scrollTop;
-            const targetScrollTop = offsetTop - 150; // 150px from top to keep title visible
-            
-            // Scroll to the calculated position
-            mainContent.scrollTo({
-              top: Math.max(0, targetScrollTop),
-              behavior: 'smooth'
-            });
-          }
-          
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
           // Add temporary highlight animation
           element.style.transition = 'all 0.3s ease';
           element.style.transform = 'scale(1.05)';
           element.style.boxShadow = '0 0 10px rgba(255, 107, 53, 0.5)';
           element.style.backgroundColor = '#ffeb3b';
-          
+
           setTimeout(() => {
             element.style.transform = 'scale(1)';
             element.style.boxShadow = 'none';
@@ -250,85 +343,203 @@ const MsisdnHistory = () => {
     console.log("historyData:", historyData);
 
     if (!historyData || historyData.length === 0) {
-      alert("No data to export.");
+      console.log("No data to export.");
       return;
     }
 
-    const formattedData = historyData.map((row) => ({
-      DateTime: row.transactionDateTime || row.dateTime || '-',
-      TransactionAmount: row.transactionAmount || '-',
-      Balance: row.mainAccountBalance || row.balance || '-',
-      ServiceIdentifier: row.EventType || row.serviceIdentifier || '-',
-      ChargingContext: row.chargingContext || '-',
-      Traffic: row.TotalVolume || row.traffic || '-',
-      UsedUnits: row.duration || row.usedUnits || row.dataVolume || '-',
-      BNumber_Voucher: formatBNumber(row.bNumber || row.bNumberVoucher, userRole),
-      LocationNumber: formatLocationNumber(row.locationNumber) || '-',
-      Details: row.details ? JSON.stringify(row.details) : 'No details',
-    }));
+    const formattedData = historyData.map((row) => {
+      const usedUnitsData = formatUsedUnits(row);
+      const bNumberData = formatBNumberSection(row, userRole);
 
-    // Create mock Excel export for demo
+      let usedUnitsStr = usedUnitsData.primaryValue !== '-' ? usedUnitsData.primaryValue : '';
+      const usedUnitsSecondaryParts = [];
+      if (usedUnitsData.paymentProfile) {
+        usedUnitsSecondaryParts.push(`PaymentProfile: ${usedUnitsData.paymentProfile}`);
+      }
+      if (usedUnitsData.originNodeId) {
+        usedUnitsSecondaryParts.push(`OriginNodeId: ${usedUnitsData.originNodeId}`);
+      }
+      if (usedUnitsSecondaryParts.length > 0) {
+        usedUnitsStr += (usedUnitsStr ? ' | ' : '') + usedUnitsSecondaryParts.join(' | ');
+      }
+      if (!usedUnitsStr) {
+        usedUnitsStr = '-';
+      }
+
+      let bNumberStr = '';
+      if (bNumberData.primaryValue !== '-') {
+        bNumberStr = bNumberData.primaryValue;
+      }
+      const bNumberSecondaryParts = [];
+      if (bNumberData.activationCode) {
+        bNumberSecondaryParts.push(`ActivationCode: ${bNumberData.activationCode}`);
+      }
+      if (bNumberData.voucherSerialNumber) {
+        bNumberSecondaryParts.push(`VoucherSerial: ${bNumberData.voucherSerialNumber}`);
+      }
+      if (bNumberSecondaryParts.length > 0) {
+        bNumberStr += (bNumberStr ? ' | ' : '') + bNumberSecondaryParts.join(' | ');
+      }
+      if (!bNumberStr) {
+        bNumberStr = '-';
+      }
+
+      let detailsStr = '';
+      let parsedDetails = {};
+      if (row.details) {
+        try {
+          parsedDetails = typeof row.details === 'string' ? JSON.parse(row.details) : row.details;
+        } catch (e) {
+          detailsStr += 'Invalid JSON in details';
+        }
+      }
+
+      if (selectedService === 'Adjustment') {
+        if (row.service && row.service !== '-') {
+          detailsStr += `service: ${row.service}\n`;
+        }
+        if (row.serviceCode && row.serviceCode !== '-') {
+          detailsStr += `serviceCode: ${row.serviceCode}\n`;
+        }
+      }
+      if (Object.keys(parsedDetails).length > 0) {
+        detailsStr += JSON.stringify(parsedDetails, null, 2);
+      }
+
+      return {
+        DateTime: row.transactionDateTime || row.dateTime || '-',
+        TransactionAmount: row.transactionAmount || '-',
+        Balance: row.mainAccountBalance || row.balance || '-',
+        ServiceIdentifier: selectedService === 'Adjustment' ? '-' : (row.EventType || row.serviceIdentifier || '-'),
+        ChargingContext: selectedService === 'Adjustment' ? '-' : (contextMap(row.chargingContext) || row.chargingContext || row.service || '-'),
+        Traffic: row.TotalVolume || row.traffic || '-',
+        UsedUnits: usedUnitsStr,
+        BNumber_Voucher: bNumberStr,
+        LocationNumber: formatLocationNumber(row.locationNumber) || '-',
+        Details: detailsStr || 'No details',
+      };
+    });
+
     console.log("Excel data prepared:", formattedData);
-    alert(`Excel export prepared with ${formattedData.length} rows`);
   };
 
-  const highlightDaIdsInDetails = (details, daIdFilter, rowIndex) => {
-    if (!details) return <span>No details available</span>;
-
-    let parsed;
-    try {
-      parsed = typeof details === 'string' ? JSON.parse(details) : details;
-    } catch (e) {
-      return <span>Invalid JSON</span>;
-    }
-
+  const highlightDaIdsInDetails = (details, daIdFilter, rowIndex, row, selectedService) => {
     const lines = [];
 
-    Object.entries(parsed).forEach(([section, entries]) => {
-      lines.push({ type: 'section', text: section });
-
-      if (Array.isArray(entries)) {
-        entries.forEach((entry, entryIndex) => {
-          Object.entries(entry).forEach(([key, val]) => {
-            const isMatch = key === 'dAId' && val.toString() === daIdFilter && daIdFilter;
-            const elementId = isMatch ? `daid-${rowIndex}-${section}-${entryIndex}-${key}` : null;
-            
-            lines.push({
-              type: 'line',
-              text: `${key}: ${val}`,
-              isDaIdLine: key === 'dAId',
-              isMatch,
-              elementId
-            });
-          });
+    // Check for 'service' and 'serviceCode' on the main row object for 'Adjustment' service
+    if (selectedService === 'Adjustment') {
+      if (row.service && row.service !== '-') {
+        lines.push({
+          type: 'line',
+          text: `service: ${row.service}`,
+          isDaIdLine: false,
+          isMatch: false,
+          elementId: null
         });
       }
-    });
+      if (row.serviceCode && row.serviceCode !== '-') {
+        lines.push({
+          type: 'line',
+          text: `serviceCode: ${row.serviceCode}`,
+          isDaIdLine: false,
+          isMatch: false,
+          elementId: null
+        });
+      }
+
+      if (lines.length > 0) {
+        lines.push({ type: 'separator' });
+      }
+    }
+
+    if (row.segmentationId && row.segmentationId !== '-') {
+      lines.push({
+        type: 'line',
+        text: `segmentationId: ${row.segmentationId}`,
+        isDaIdLine: false,
+        isMatch: false,
+        elementId: null
+      });
+    }
+
+    // Now, process the actual JSON details field if it exists
+    let parsedDetails = {};
+    if (details) {
+      try {
+        parsedDetails = typeof details === 'string' ? JSON.parse(details) : details;
+      } catch (e) {
+        lines.push({ type: 'line', text: 'Invalid JSON in details', isDaIdLine: false, isMatch: false, elementId: null });
+      }
+    }
+
+    if (Object.keys(parsedDetails).length > 0) {
+      Object.entries(parsedDetails).forEach(([section, entries]) => {
+        lines.push({ type: 'section', text: section });
+
+        if (Array.isArray(entries)) {
+          entries.forEach((entry, entryIndex) => {
+            Object.entries(entry).forEach(([key, val]) => {
+              const isMatch = key === 'dAId' && val.toString() === daIdFilter && daIdFilter;
+              const elementId = isMatch ? `daid-${rowIndex}-${section}-${entryIndex}-${key}` : null;
+
+              lines.push({
+                type: 'line',
+                text: `${key}: ${val}`,
+                isDaIdLine: key === 'dAId',
+                isMatch,
+                elementId
+              });
+            });
+          });
+        } else {
+          lines.push({ type: 'line', text: `${section}: ${parsedDetails[section]}`, isDaIdLine: false, isMatch: false, elementId: null});
+        }
+      });
+    }
+
+    // If no data to show
+    if (lines.length === 0) {
+      return <span>---</span>;
+    }
 
     return (
       <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.85em' }}>
-        {lines.map((item, i) =>
-          item.type === 'section' ? (
-            <div key={i} style={{ fontWeight: 'bold', marginTop: '4px', textDecoration: 'underline' }}>
-              {item.text}
-            </div>
-          ) : (
-            <div
-              key={i}
-              id={item.elementId || undefined}
-              style={{
-                fontWeight: item.isDaIdLine ? 'bold' : 'normal',
-                backgroundColor: item.isMatch ? '#cce5ff' : 'transparent',
-                fontFamily: 'monospace',
-                padding: item.isMatch ? '2px 4px' : '0',
-                borderRadius: item.isMatch ? '3px' : '0',
-                border: item.isMatch ? '1px solid #007bff' : 'none'
-              }}
-            >
-              {item.text}
-            </div>
-          )
-        )}
+        {lines.map((item, i) => {
+          if (item.type === 'section') {
+            return (
+              <div key={i} style={{ fontWeight: 'bold', marginTop: '4px', textDecoration: 'underline' }}>
+                {item.text}
+              </div>
+            );
+          } else if (item.type === 'separator') {
+            return (
+              <div key={i} style={{
+                borderTop: '1px solid #ccc',
+                margin: '4px 0',
+                height: '1px'
+              }}></div>
+            );
+          } else {
+            return (
+              <div
+                key={i}
+                id={item.elementId || undefined}
+                style={{
+                  fontWeight: item.isDaIdLine ? 'bold' : 'normal',
+                  backgroundColor: item.isMatch ? '#cce5ff' : 'transparent',
+                  fontFamily: 'monospace',
+                  padding: item.isMatch ? '2px 4px' : '0',
+                  borderRadius: item.isMatch ? '3px' : '0',
+                  border: item.isMatch ? '1px solid #007bff' : 'none',
+                  fontSize: '12px',
+                  lineHeight: '1.4'
+                }}
+              >
+                {item.text}
+              </div>
+            );
+          }
+        })}
       </div>
     );
   };
@@ -339,6 +550,8 @@ const MsisdnHistory = () => {
     )
   );
 
+  console.log("✅ Current History Data Length:", historyData.length);
+  console.log("✅ Current Selected Service:", selectedService);
   console.log("✅ Filtered Data:", filteredData);
 
   return (
@@ -421,7 +634,7 @@ const MsisdnHistory = () => {
               />
               {totalMatches > 0 && (
                 <span className="match-counter">
-                  {currentMatchIndex + 1} / {totalMatches}
+                  {`${currentMatchIndex + 1} / ${totalMatches}`}
                 </span>
               )}
             </div>
@@ -436,7 +649,7 @@ const MsisdnHistory = () => {
                   <th>Balance</th>
                   <th>Service Identifier</th>
                   <th>Charging Context
-                    <select 
+                    <select
                       className="header-select"
                       value={selectedService}
                       onChange={(e) => setSelectedService(e.target.value)}
@@ -455,24 +668,69 @@ const MsisdnHistory = () => {
               </thead>
               <tbody>
                 {historyData.length === 0 ? (
-                  <tr><td colSpan="10" style={{textAlign:'center'}}>No data available</td></tr>
+                  <tr><td colSpan="10" style={{ textAlign: 'center' }}>No data available</td></tr>
                 ) : (
-                  historyData.map((row, index) => (
-                    <tr key={index}>
-                      <td>{row.transactionDateTime || row.dateTime || '-'}</td>
-                      <td>{row.transactionAmount || '-'}</td>
-                      <td>{row.mainAccountBalance || row.balance || '-'}</td>
-                      <td>{row.EventType || row.serviceIdentifier || '-'}</td>
-                      <td>{contextMap(row.chargingContext) || row.chargingContext || '-'}</td>
-                      <td>{row.TotalVolume || row.traffic || '-'}</td>
-                      <td>{row.duration || row.usedUnits || row.dataVolume || '-'}</td>
-                      <td>{formatBNumber(row.bNumber || row.bNumberVoucher, userRole)}</td>
-                      <td>{formatLocationNumber(row.locationNumber) || '-'}</td>
-                      <td className="details-cell">
-                        {highlightDaIdsInDetails(row.details, daIdFilter, index)}
-                      </td>
-                    </tr>
-                  ))
+                  historyData.map((row, index) => {
+                    const usedUnitsData = formatUsedUnits(row);
+                    const bNumberData = formatBNumberSection(row, userRole);
+
+                    return (
+                      <tr key={index}>
+                        <td>{row.transactionDateTime || row.dateTime || '-'}</td>
+                        <td>{row.transactionAmount || '-'}</td>
+                        <td>{row.mainAccountBalance || row.balance || '-'}</td>
+                        <td>{selectedService === 'Adjustment' ? '-' : (row.EventType || row.serviceIdentifier || row.serviceCode || '-')}</td>
+                        <td>{selectedService === 'Adjustment' ? '-' : (contextMap(row.chargingContext) || row.chargingContext || row.service || '-')}</td>
+                        <td>{row.TotalVolume || row.traffic || '-'}</td>
+                        <td className="used-units-cell">
+                          <div className="used-units-container">
+                            {usedUnitsData.primaryValue !== '-' && (
+                              <div className="primary-value">{usedUnitsData.primaryValue}</div>
+                            )}
+                            {(usedUnitsData.paymentProfile || usedUnitsData.originNodeId) && (
+                              <div className="secondary-values">
+                                {usedUnitsData.paymentProfile && (
+                                  <div className="payment-profile">
+                                    <span className="label">Payment:</span> {usedUnitsData.paymentProfile}
+                                  </div>
+                                )}
+                                {usedUnitsData.originNodeId && (
+                                  <div className="origin-node">
+                                    <span className="label">Origin:</span> {usedUnitsData.originNodeId}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="bnumber-cell">
+                          <div className="bnumber-container">
+                            {bNumberData.primaryValue !== '-' && (
+                              <div className="primary-value">{bNumberData.primaryValue}</div>
+                            )}
+                            {(bNumberData.activationCode || bNumberData.voucherSerialNumber) && (
+                              <div className="secondary-values">
+                                {bNumberData.activationCode && (
+                                  <div className="activation-code">
+                                    <span className="label">Activation:</span> {bNumberData.activationCode}
+                                  </div>
+                                )}
+                                {bNumberData.voucherSerialNumber && (
+                                  <div className="voucher-serial">
+                                    <span className="label">Serial:</span> {bNumberData.voucherSerialNumber}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td>{formatLocationNumber(row.locationNumber) || '-'}</td>
+                        <td className="details-cell">
+                          {highlightDaIdsInDetails(row.details, daIdFilter, index, row, selectedService)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -762,10 +1020,59 @@ const MsisdnHistory = () => {
           background: #e9ecef;
         }
 
+        .used-units-cell {
+          min-width: 150px;
+          max-width: 200px;
+        }
+
+        .bnumber-cell {
+          min-width: 140px;
+          max-width: 180px;
+        }
+
+        .used-units-container,
+        .bnumber-container {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .primary-value {
+          font-weight: 600;
+          color: #333;
+          font-size: 14px;
+          margin-bottom: 4px;
+        }
+
+        .secondary-values {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+
+        .payment-profile,
+        .origin-node,
+        .activation-code,
+        .voucher-serial {
+          font-size: 12px;
+          color: #666;
+          background: #f8f9fa;
+          padding: 2px 4px;
+          border-radius: 3px;
+          border-left: 3px solid #ff6b35;
+        }
+
+        .payment-profile .label,
+        .origin-node .label,
+        .activation-code .label,
+        .voucher-serial .label {
+          font-weight: 600;
+          color: #333;
+        }
+
         .details-cell {
           max-width: 250px;
           min-width: 210px;
-
           position: relative;
         }
 
@@ -814,6 +1121,21 @@ const MsisdnHistory = () => {
           }
 
           .data-table {
+            font-size: 10px;
+          }
+
+          .used-units-container {
+            font-size: 10px;
+          }
+
+          .bnumber-container {
+            font-size: 10px;
+          }
+
+          .payment-profile,
+          .origin-node,
+          .activation-code,
+          .voucher-serial {
             font-size: 10px;
           }
         }

@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 
 const MSISDNContent = () => {
   const [msisdn, setMsisdn] = useState('56005443');
+  const [showFafCug, setShowFafCug] = useState(false);
   const [searchResults, setSearchResults] = useState({
     subscriberNumber: '21656005443',
     serviceClass: '14 ( EDAWA5 )',
@@ -12,7 +13,19 @@ const MSISDNContent = () => {
     status: 'Active',
     barringStatus: '',
     supervisionFee: '2037-12-31 12:00',
-    serviceRemoval: '2037-12-31 12:00'
+    serviceRemoval: '2037-12-31 12:00',
+    fafData: {
+      fafNumbers: ['21698765432', '21687654321', '21676543210'],
+      activationDate: '2025-04-18',
+      status: 'Active'
+    },
+    cugData: {
+      communityId: 'CUG_001234',
+      groupName: 'Corporate Group A',
+      memberCount: 15,
+      activationDate: '2025-04-18',
+      status: 'Active'
+    }
   });
 
   const [activeTab, setActiveTab] = useState('Dedicated Accounts');
@@ -22,8 +35,6 @@ const MSISDNContent = () => {
     'Dedicated Accounts',
     'Accumulator',
     'Offer',
-    'FAF',
-    'Community ID',
     'Usage Thresholds/Counters'
   ];
 
@@ -35,12 +46,12 @@ const MSISDNContent = () => {
   ];
 
   const handleSearch = () => {
-    // Simulate search functionality
     console.log('Searching for MSISDN:', msisdn);
   };
 
   const handleClear = () => {
     setMsisdn('');
+    setShowFafCug(false);
     setSearchResults({
       subscriberNumber: '',
       serviceClass: '',
@@ -50,8 +61,14 @@ const MSISDNContent = () => {
       status: '',
       barringStatus: '',
       supervisionFee: '',
-      serviceRemoval: ''
+      serviceRemoval: '',
+      fafData: null,
+      cugData: null
     });
+  };
+
+  const toggleFafCug = () => {
+    setShowFafCug(!showFafCug);
   };
 
   return (
@@ -89,46 +106,113 @@ const MSISDNContent = () => {
         </div>
       </div>
 
-      <div className="info-panel">
-        <div className="info-grid">
-          <div className="info-item">
-            <span className="label">Subscriber Number :</span>
-            <span className="value">{searchResults.subscriberNumber}</span>
+      {/* THREE SEPARATE BOXES */}
+      <div className="boxes-container">
+        <div className="main-boxes">
+          {/* BOX 1: SUB NUMBER */}
+          <div className="single-box">
+            <div className="box-header">SUB NUMBER</div>
+            <div className="box-body">
+              <div className="info-row">
+                <span className="info-label">SUB NUMBER:</span>
+                <span className="info-value">{searchResults.subscriberNumber}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">SC OFFRE:</span>
+                <span className="info-value">{searchResults.serviceClass}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">STATUS ON:</span>
+                <span className="info-value">{searchResults.activationDate}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Barring Status:</span>
+                <span className="info-value">{searchResults.barringStatus}</span>
+              </div>
+            </div>
           </div>
-          <div className="info-item">
-            <span className="label">Service Class :</span>
-            <span className="value">{searchResults.serviceClass}</span>
+
+          {/* BOX 2: DATE */}
+          <div className="single-box">
+            <div className="box-header">DATE</div>
+            <div className="box-body">
+              <div className="info-row">
+                <span className="info-label">Service Fee:</span>
+                <span className="info-value">{searchResults.serviceFee}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Status:</span>
+                <span className={`info-value status-${searchResults.status.toLowerCase()}`}>
+                  {searchResults.status}
+                </span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Supervision Fee:</span>
+                <span className="info-value">{searchResults.supervisionFee}</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Service Removal:</span>
+                <span className="info-value">{searchResults.serviceRemoval}</span>
+              </div>
+            </div>
           </div>
-          <div className="info-item">
-            <span className="label">Activation Date :</span>
-            <span className="value">{searchResults.activationDate}</span>
+        </div>
+
+        <div className="right-column">
+          {/* BOX 3: SOLDE */}
+          <div className="single-box solde-box">
+            <div className="box-header">SOLDE</div>
+            <div className="box-body">
+              <div className="balance-section">
+                <div className="balance-amount">{searchResults.balance}</div>
+              </div>
+              {(searchResults.fafData || searchResults.cugData) && (
+                <button className="faf-cug-btn" onClick={toggleFafCug}>
+                  {showFafCug ? 'Hide' : 'Reveal'} FAF & Community ID
+                </button>
+              )}
+            </div>
           </div>
-          <div className="info-item">
-            <span className="label">Balance :</span>
-            <span className="value">{searchResults.balance}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Service Fee Period :</span>
-            <span className="value">{searchResults.serviceFee}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Status :</span>
-            <span className={`value status-${searchResults.status.toLowerCase()}`}>
-              {searchResults.status}
-            </span>
-          </div>
-          <div className="info-item">
-            <span className="label">Barring Status :</span>
-            <span className="value">{searchResults.barringStatus}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Supervision Fee Period :</span>
-            <span className="value">{searchResults.supervisionFee}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Service Removal :</span>
-            <span className="value">{searchResults.serviceRemoval}</span>
-          </div>
+
+          {/* FAF & CUG Container */}
+          {showFafCug && (searchResults.fafData || searchResults.cugData) && (
+            <div className="faf-cug-container">
+              <div className="box-header">FAF & COMMUNITY ID</div>
+              <div className="box-body faf-cug-body">
+                {searchResults.fafData && (
+                  <div className="faf-section">
+                    <h4 className="section-title">FAF Numbers</h4>
+                    <div className="faf-numbers">
+                      {searchResults.fafData.fafNumbers.map((number, index) => (
+                        <div key={index} className="faf-number">{number}</div>
+                      ))}
+                    </div>
+                    <div className="faf-info">
+                      <span className="info-small">Status: {searchResults.fafData.status}</span>
+                    </div>
+                  </div>
+                )}
+                
+                {searchResults.cugData && (
+                  <div className="cug-section">
+                    <h4 className="section-title">Community Group</h4>
+                    <div className="info-row-small">
+                      <span className="info-label-small">ID:</span>
+                      <span className="info-value-small">{searchResults.cugData.communityId}</span>
+                    </div>
+                    <div className="info-row-small">
+                      <span className="info-label-small">Group:</span>
+                      <span className="info-value-small">{searchResults.cugData.groupName}</span>
+                    </div>
+                    <div className="info-row-small">
+                      <span className="info-label-small">Members:</span>
+                      <span className="info-value-small">{searchResults.cugData.memberCount}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -188,7 +272,7 @@ const MSISDNContent = () => {
       </div>
 
       <div className="footer">
-        <p>© 2023 MINSAT. All Rights Reserved | Design by: ODC</p>
+        <p>© 2025 SIMTRACK. All Rights Reserved | Design by: ODC</p>
       </div>
 
       <style jsx>{`
@@ -301,47 +385,183 @@ const MSISDNContent = () => {
           background: #555;
         }
 
-        .info-panel {
-          background: white;
-          border: 2px solid #ff6b35;
-          border-radius: 8px;
-          padding: 20px;
+        /* BOXES CONTAINER STYLING */
+        .boxes-container {
+          display: flex;
+          gap: 15px;
           margin-bottom: 20px;
         }
 
-        .info-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        .main-boxes {
+          display: flex;
           gap: 15px;
-          background: #f8f9fa;
-          padding: 20px;
-          border-radius: 4px;
+          flex: 2;
         }
 
-        .info-item {
+        .right-column {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .single-box {
+          background: white;
+          border: 2px solid #333;
+          border-radius: 6px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          flex: 1;
+        }
+
+        .solde-box {
+          min-height: 140px;
+        }
+
+        .box-header {
+          background: #ff6b35;
+          color: white;
+          padding: 10px;
+          text-align: center;
+          font-weight: bold;
+          font-size: 14px;
+          border-radius: 4px 4px 0 0;
+        }
+
+        .box-body {
+          padding: 15px;
+          height: calc(100% - 44px);
+          display: flex;
+          flex-direction: column;
+        }
+
+        .info-row {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          padding: 8px 0;
-          border-bottom: 1px solid #e9ecef;
+          margin-bottom: 8px;
+          font-size: 15px;
         }
 
-        .info-item:last-child {
-          border-bottom: none;
-        }
-
-        .info-item .label {
-          font-weight: 600;
+        .info-label {
+          font-weight: bold;
           color: #333;
         }
 
-        .info-item .value {
-          color: #555;
+        .info-value {
+          color: #666;
         }
 
         .status-active {
           color: #28a745;
-          font-weight: 600;
+          font-weight: bold;
+        }
+
+        .balance-section {
+          text-align: center;
+          margin: 10px 0;
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .balance-amount {
+          font-size: 20px;
+          font-weight: bold;
+          color: #ff6b35;
+        }
+
+        .faf-cug-btn {
+          background: #ff6b35;
+          color: white;
+          border: none;
+          padding: 8px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          width: 100%;
+          transition: background 0.3s ease;
+        }
+
+        .faf-cug-btn:hover {
+          background: #e55a2e;
+        }
+
+        /* FAF & CUG Container */
+        .faf-cug-container {
+          background: white;
+          border: 2px solid #333;
+          border-radius: 6px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .faf-cug-body {
+          padding: 12px;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        .section-title {
+          margin: 0 0 8px 0;
+          font-size: 13px;
+          font-weight: bold;
+          color: #ff6b35;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 4px;
+        }
+
+        .faf-section, .cug-section {
+          margin-bottom: 15px;
+        }
+
+        .faf-section:last-child, .cug-section:last-child {
+          margin-bottom: 0;
+        }
+
+        .faf-numbers {
+          margin-bottom: 8px;
+        }
+
+        .faf-number {
+          background: #f8f9fa;
+          padding: 4px 8px;
+          border-radius: 3px;
+          font-size: 12px;
+          margin-bottom: 3px;
+          border: 1px solid #e9ecef;
+        }
+
+        .info-row-small {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 4px;
+          font-size: 12px;
+        }
+
+        .info-label-small {
+          font-weight: bold;
+          color: #333;
+        }
+
+        .info-value-small {
+          color: #666;
+        }
+
+        .info-small {
+          font-size: 12px;
+          color: #28a745;
+          font-weight: 500;
         }
 
         .tabs-section {
@@ -455,8 +675,12 @@ const MSISDNContent = () => {
             align-items: stretch;
           }
 
-          .info-grid {
-            grid-template-columns: 1fr;
+          .boxes-container {
+            flex-direction: column;
+          }
+
+          .main-boxes {
+            flex-direction: column;
           }
 
           .tabs-header {
