@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, Calendar, Loader } from 'lucide-react';
 import * as XLSX from 'xlsx';
- 
+
 const MsisdnHistory = () => {
   const [msisdn, setMsisdn] = useState('50013115');
   const [startDate, setStartDate] = useState('');
@@ -12,42 +12,41 @@ const MsisdnHistory = () => {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [userRole, setUserRole] = useState('agentDSC'); // Default role for demo
   const [isLoading, setIsLoading] = useState(false);
- 
+
   const [historyData, setHistoryData] = useState([]);
   const [rawData, setRawData] = useState({});
   const [lastFetchedMsisdn, setLastFetchedMsisdn] = useState('');
- 
 
   const API_URL = import.meta.env.VITE_API_URL;
 
   // Refs to track matching elements
   const matchingElementsRef = useRef([]);
   const daIdInputRef = useRef(null);
- 
-  const serviceOptions = ['PAM', 'Adjustment', 'Refill', 'SMS', 'Voice', 'Data'];
- 
+
+  const serviceOptions = ['All', 'PAM', 'Adjustment', 'Refill', 'SMS', 'Voice', 'Data'];
+
   const contextMap = (ctx) => {
     if (ctx === "CAPv2_V.1.0@ericsson.com" || ctx === "CAP_V.1.0@ericsson.com") return "Voice";
     if (ctx === "SCAP_V.2.0@ericsson.com") return "SMS";
     if (ctx === "Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org") return "Data";
     return ctx;
   };
- 
+
   const formatLocationNumber = (locationNumber) => {
     if (!locationNumber || locationNumber === '-') return '-';
- 
+
     const numStr = locationNumber.toString();
     if (numStr.startsWith('21650') || numStr.startsWith('6050')) {
       return 'NATIONAL';
     }
     return 'INTERNATIONAL';
   };
- 
+
   const formatBNumber = (bNumber, role) => {
     if (!bNumber || bNumber === '-') return '-';
- 
+
     const numStr = bNumber.toString();
- 
+
     // If role is agentDSC, mask the number
     if (role === 'agentDSC') {
       if (numStr.length > 5) {
@@ -57,33 +56,33 @@ const MsisdnHistory = () => {
         return visiblePart + maskedPart;
       }
     }
- 
+
     // For agent IN or other roles, show the full number
     return numStr;
   };
- 
+
   // New function to format the Used Units column with two fields
   const formatUsedUnits = (row) => {
     const paymentProfile = row.paymentProfile || '';
-   const originNodeId = row.originNodeId || '';
+    const originNodeId = row.originNodeId || '';
     const duration = row.duration || '';
     const usedUnits = row.usedUnits || '';
     const dataVolume = row.dataVolume || '';
- 
+
     // If we have duration, usedUnits, or dataVolume, show them along with the two new fields
     const primaryValue = duration || usedUnits || dataVolume || '-';
- 
+
     return {
       primaryValue,
       paymentProfile,
       originNodeId
     };
   };
- 
+
   // New function to format B Number section with fallback fields
   const formatBNumberSection = (row, role) => {
     const bNumber = row.bNumber || row.bNumberVoucher;
- 
+
     if (bNumber && bNumber !== '-') {
       return {
         primaryValue: formatBNumber(bNumber, role),
@@ -91,23 +90,23 @@ const MsisdnHistory = () => {
         voucherSerialNumber: null
       };
     }
- 
+
     // If no B Number, show activation code and voucher serial number
     const activationCode = row.activationCode || '';
     const voucherSerialNumber = row.voucherSerialNumber || '';
- 
+
     return {
       primaryValue: '-',
       activationCode,
       voucherSerialNumber
     };
   };
- 
+
   const parseDate = (str) => {
     const [year, month, day] = str.split('-');
     return new Date(`${year}-${month}-${day}`);
   };
- 
+
   const isInDateRange = (dateStr) => {
     if (!dateStr) return true; // If no date, include it
     
@@ -115,7 +114,7 @@ const MsisdnHistory = () => {
       const date = new Date(dateStr);
       const start = startDate ? parseDate(startDate) : null;
       const end = endDate ? parseDate(endDate) : null;
- 
+
       if (end) end.setHours(23, 59, 59, 999);
       return (!start || date >= start) && (!end || date <= end);
     } catch (error) {
@@ -123,7 +122,7 @@ const MsisdnHistory = () => {
       return true; // Include invalid dates to avoid losing data
     }
   };
- 
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -139,7 +138,7 @@ const MsisdnHistory = () => {
           endDate: endDate || '' 
         }),
       });
- 
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -161,7 +160,7 @@ const MsisdnHistory = () => {
       setIsLoading(false);
     }
   };
- 
+
   const filterDataByService = (data, service) => {
     console.log('🔄 Filtering data by service:', service);
     console.log('🔄 Available data keys:', Object.keys(data));
@@ -169,7 +168,16 @@ const MsisdnHistory = () => {
     let filtered = [];
     
     try {
-      if (service === 'PAM') {
+      if (service === 'All') {
+        // Combine all data from PAM, Adjustment, Refill, and Usage (Voice, SMS, Data)
+        const pamData = (data.PAM || []).filter(d => isInDateRange(d.transactionDateTime));
+        const adjustmentData = (data.SDPAdjustment || []).filter(l => isInDateRange(l.transactionDateTime));
+        const refillData = (data.Refill || []).filter(r => isInDateRange(r.transactionDateTime));
+        const usageData = (data.Usage || []).filter(entry => isInDateRange(entry.transactionDateTime));
+        
+        // Concatenate all arrays
+        filtered = [...pamData, ...adjustmentData, ...refillData, ...usageData];
+      } else if (service === 'PAM') {
         filtered = (data.PAM || []).filter(d => {
           const inRange = isInDateRange(d.transactionDateTime);
           return inRange;
@@ -178,7 +186,7 @@ const MsisdnHistory = () => {
         filtered = (data.SDPAdjustment || []).filter(l => {
           const inRange = isInDateRange(l.transactionDateTime);
           return inRange;
-       });
+        });
       } else if (service === 'Refill') {
         filtered = (data.Refill || []).filter(r => {
           const inRange = isInDateRange(r.transactionDateTime);
@@ -212,7 +220,7 @@ const MsisdnHistory = () => {
       return [];
     }
   };
- 
+
   const handleSearch = async () => {
     console.log('🚀 Starting search...');
     // Clear existing data immediately when starting a new search
@@ -226,7 +234,7 @@ const MsisdnHistory = () => {
       console.log('✅ Search completed. History data set:', filtered.length, 'items');
     }
   };
- 
+
   // Only filter when service changes, but keep existing data
   useEffect(() => {
     console.log('🔄 Service or date filter changed:', selectedService);
@@ -236,7 +244,7 @@ const MsisdnHistory = () => {
       console.log('✅ Data re-filtered:', filtered.length, 'items');
     }
   }, [selectedService, startDate, endDate]); // Added startDate and endDate as dependencies
- 
+
   // Separate useEffect for rawData changes to avoid conflicts
   useEffect(() => {
     if (Object.keys(rawData).length > 0) {
@@ -245,7 +253,7 @@ const MsisdnHistory = () => {
       console.log('✅ Raw data processed:', filtered.length, 'items');
     }
   }, [rawData]);
- 
+
   const handleClear = () => {
     console.log('🧹 Clearing all data...');
     setMsisdn('');
@@ -260,14 +268,14 @@ const MsisdnHistory = () => {
     setLastFetchedMsisdn('');
     matchingElementsRef.current = [];
   };
- 
+
   // Count total matches and update matching elements
   const countMatches = () => {
     if (!daIdFilter) return 0;
- 
+
     let count = 0;
     const elements = [];
- 
+
     historyData.forEach((row, rowIndex) => {
       if (row.details) {
         try {
@@ -292,20 +300,20 @@ const MsisdnHistory = () => {
         }
       }
     });
- 
+
     matchingElementsRef.current = elements;
     return count;
   };
- 
+
   const totalMatches = countMatches();
- 
+
   // Navigate to next match
   const navigateToNextMatch = () => {
     if (totalMatches === 0) return;
- 
+
     const nextIndex = (currentMatchIndex + 1) % totalMatches;
     setCurrentMatchIndex(nextIndex);
- 
+
     // Scroll to the element
     const targetMatch = matchingElementsRef.current[nextIndex];
     if (targetMatch) {
@@ -313,13 +321,13 @@ const MsisdnHistory = () => {
         const element = document.getElementById(targetMatch.elementId);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
- 
+
           // Add temporary highlight animation
           element.style.transition = 'all 0.3s ease';
           element.style.transform = 'scale(1.05)';
           element.style.boxShadow = '0 0 10px rgba(255, 107, 53, 0.5)';
           element.style.backgroundColor = '#ffeb3b';
- 
+
           setTimeout(() => {
             element.style.transform = 'scale(1)';
             element.style.boxShadow = 'none';
@@ -329,7 +337,7 @@ const MsisdnHistory = () => {
       }, 100);
     }
   };
- 
+
   // Handle Enter key press
   const handleDaIdKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -337,28 +345,28 @@ const MsisdnHistory = () => {
       navigateToNextMatch();
     }
   };
- 
+
   // Reset current match index when filter changes
   useEffect(() => {
     setCurrentMatchIndex(0);
   }, [daIdFilter, historyData]);
- 
+
   const exportToExcel = () => {
     console.log("Exporting Excel...");
     console.log("msisdn:", msisdn);
     console.log("selectedService:", selectedService);
     console.log("historyData:", historyData);
- 
+
     if (!historyData || historyData.length === 0) {
       alert("No data to export.");
       return;
     }
- 
+
     // Prepare the data for Excel export
     const formattedData = historyData.map((row, index) => {
       const usedUnitsData = formatUsedUnits(row);
       const bNumberData = formatBNumberSection(row, userRole);
- 
+
       // Format Used Units column
       let usedUnitsStr = usedUnitsData.primaryValue !== '-' ? usedUnitsData.primaryValue : '';
       const usedUnitsSecondaryParts = [];
@@ -374,7 +382,7 @@ const MsisdnHistory = () => {
       if (!usedUnitsStr) {
         usedUnitsStr = '-';
       }
- 
+
       // Format B Number column
       let bNumberStr = '';
       if (bNumberData.primaryValue !== '-') {
@@ -393,7 +401,7 @@ const MsisdnHistory = () => {
       if (!bNumberStr) {
         bNumberStr = '-';
       }
- 
+
       // Format Details column
       let detailsStr = '';
       let parsedDetails = {};
@@ -404,7 +412,7 @@ const MsisdnHistory = () => {
           detailsStr += 'Invalid JSON in details';
         }
       }
- 
+
       if (selectedService === 'Adjustment') {
         if (row.service && row.service !== '-') {
           detailsStr += `service: ${row.service}\n`;
@@ -421,7 +429,7 @@ const MsisdnHistory = () => {
       if (Object.keys(parsedDetails).length > 0) {
         detailsStr += JSON.stringify(parsedDetails, null, 2);
       }
- 
+
       return {
         DateTime: row.transactionDateTime || row.dateTime || '-',
         TransactionAmount: row.transactionAmount || '-',
@@ -435,7 +443,7 @@ const MsisdnHistory = () => {
         Details: detailsStr || 'No details',
       };
     });
- 
+
     // Create workbook and worksheet
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(formattedData);
@@ -451,7 +459,7 @@ const MsisdnHistory = () => {
       colWidths[i] = { wch: Math.min(maxLength + 2, 50) }; // Cap at 50 characters
     });
     ws['!cols'] = colWidths;
- 
+
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, selectedService);
     
@@ -471,10 +479,10 @@ const MsisdnHistory = () => {
     
     console.log("Excel file exported successfully:", filename);
   };
- 
+
   const highlightDaIdsInDetails = (details, daIdFilter, rowIndex, row, selectedService) => {
     const lines = [];
- 
+
     // Check for 'service' and 'serviceCode' on the main row object for 'Adjustment' service
     if (selectedService === 'Adjustment') {
       if (row.service && row.service !== '-') {
@@ -495,12 +503,12 @@ const MsisdnHistory = () => {
           elementId: null
         });
       }
- 
+
       if (lines.length > 0) {
         lines.push({ type: 'separator' });
       }
     }
- 
+
     if (row.segmentationId && row.segmentationId !== '-') {
       lines.push({
         type: 'line',
@@ -510,7 +518,7 @@ const MsisdnHistory = () => {
         elementId: null
       });
     }
- 
+
     // Now, process the actual JSON details field if it exists
     let parsedDetails = {};
     if (details) {
@@ -520,17 +528,17 @@ const MsisdnHistory = () => {
         lines.push({ type: 'line', text: 'Invalid JSON in details', isDaIdLine: false, isMatch: false, elementId: null });
       }
     }
- 
+
     if (Object.keys(parsedDetails).length > 0) {
       Object.entries(parsedDetails).forEach(([section, entries]) => {
         lines.push({ type: 'section', text: section });
- 
+
         if (Array.isArray(entries)) {
           entries.forEach((entry, entryIndex) => {
             Object.entries(entry).forEach(([key, val]) => {
               const isMatch = key === 'dAId' && val.toString() === daIdFilter && daIdFilter;
               const elementId = isMatch ? `daid-${rowIndex}-${section}-${entryIndex}-${key}` : null;
- 
+
               lines.push({
                 type: 'line',
                 text: `${key}: ${val}`,
@@ -545,12 +553,12 @@ const MsisdnHistory = () => {
         }
       });
     }
- 
+
     // If no data to show
     if (lines.length === 0) {
       return <span>---</span>;
     }
- 
+
     return (
       <div style={{ whiteSpace: 'pre-wrap', fontSize: '0.85em' }}>
         {lines.map((item, i) => {
@@ -592,17 +600,17 @@ const MsisdnHistory = () => {
       </div>
     );
   };
- 
+
   const filteredData = historyData.filter(row =>
     Object.values(row).some(
       val => val && val.toString().toLowerCase().includes(globalSearch.toLowerCase())
     )
   );
- 
+
   console.log("✅ Current History Data Length:", historyData.length);
   console.log("✅ Current Selected Service:", selectedService);
   console.log("✅ Filtered Data:", filteredData);
- 
+
   return (
     <div className="main-content">
       <div className="msisdn-history">
@@ -612,7 +620,7 @@ const MsisdnHistory = () => {
           </div>
           <h1>MSISDN History</h1>
         </div>
- 
+
         <div className="search-section">
           <div className="search-row">
             <div className="search-field">
@@ -628,7 +636,7 @@ const MsisdnHistory = () => {
               </div>
             </div>
           </div>
- 
+
           <div className="search-row">
             <div className="search-field">
               <label>Début :</label>
@@ -641,7 +649,7 @@ const MsisdnHistory = () => {
                 <Calendar className="date-icon" size={16} />
               </div>
             </div>
- 
+
             <div className="search-field">
               <label>Fin :</label>
               <div className="date-input">
@@ -654,7 +662,7 @@ const MsisdnHistory = () => {
               </div>
             </div>
           </div>
- 
+
           <div className="search-buttons">
             <button className="btn-search" onClick={handleSearch} disabled={isLoading}>
               {isLoading ? (
@@ -671,7 +679,7 @@ const MsisdnHistory = () => {
             </button>
           </div>
         </div>
- 
+
         <div className="table-section">
           <div className="table-header">
             <button className="btn-excel" onClick={exportToExcel}>
@@ -695,7 +703,7 @@ const MsisdnHistory = () => {
               )}
             </div>
           </div>
- 
+
           <div className="data-table">
             <table>
               <thead>
@@ -738,7 +746,7 @@ const MsisdnHistory = () => {
                   historyData.map((row, index) => {
                     const usedUnitsData = formatUsedUnits(row);
                     const bNumberData = formatBNumberSection(row, userRole);
- 
+
                     return (
                       <tr key={index}>
                         <td>{row.transactionDateTime || row.dateTime || '-'}</td>
@@ -800,7 +808,7 @@ const MsisdnHistory = () => {
               </tbody>
             </table>
           </div>
- 
+
           <div className="table-footer">
             <span>Showing {historyData.length} entr{historyData.length > 1 ? 'ies' : 'y'}</span>
             {totalMatches > 0 && (
@@ -859,7 +867,7 @@ const MsisdnHistory = () => {
         .btn-search:disabled:hover {
           background: #ff6b35;
         }
- 
+
         .msisdn-history {
           background-color: #f5f5f5;
           min-height: 100%;
@@ -867,7 +875,7 @@ const MsisdnHistory = () => {
           font-family: Arial, sans-serif;
           font-size: 10px;
         }
- 
+
         .content-header {
           display: flex;
           align-items: center;
@@ -875,7 +883,7 @@ const MsisdnHistory = () => {
           margin-bottom: 10px;
           font-size: 19px;
         }
- 
+
         .header-icon {
           background: #ff6b35;
           color: white;
@@ -883,14 +891,14 @@ const MsisdnHistory = () => {
           border-radius: 4px;
           font-size: 16px;
         }
- 
+
         .content-header h1 {
           color: #333;
           margin: 0;
           font-size: 22px;
           font-weight: 600;
         }
- 
+
         .search-section {
           background: white;
           padding: 30px;
@@ -899,31 +907,31 @@ const MsisdnHistory = () => {
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           font-size: 18px;
         }
- 
+
         .search-row {
           display: flex;
           gap: 40px;
           margin-bottom: 20px;
           align-items: center;
         }
- 
+
         .search-row:last-of-type {
           margin-bottom: 30px;
         }
- 
+
         .search-field {
           display: flex;
           align-items: center;
           gap: 10px;
           min-width: 200px;
         }
- 
+
         .search-field label {
           font-weight: 600;
           color: #333;
           min-width: 60px;
         }
- 
+
         .input-group {
           display: flex;
           align-items: center;
@@ -931,7 +939,7 @@ const MsisdnHistory = () => {
           border-radius: 4px;
           overflow: hidden;
         }
- 
+
         .country-code {
           background: #f8f9fa;
           padding: 8px 12px;
@@ -939,7 +947,7 @@ const MsisdnHistory = () => {
           font-size: 20px;
           color: #666;
         }
- 
+
         .input-group input {
           padding: 8px 12px;
           border: none;
@@ -947,13 +955,13 @@ const MsisdnHistory = () => {
           min-width: 150px;
           font-size: 16px;
         }
- 
+
         .date-input {
           position: relative;
           display: flex;
           align-items: center;
         }
- 
+
         .date-input input {
           padding: 8px 12px;
           border: 1px solid #ddd;
@@ -962,11 +970,11 @@ const MsisdnHistory = () => {
           min-width: 150px;
           font-size: 16px;
         }
- 
+
         .date-input input::-webkit-calendar-picker-indicator {
           opacity: 0;
         }
- 
+
         .date-icon {
           position: absolute;
           right: 10px;
@@ -974,13 +982,13 @@ const MsisdnHistory = () => {
           pointer-events: none;
           z-index: 1;
         }
- 
+
         .search-buttons {
           display: flex;
           gap: 10px;
           justify-content: center;
         }
- 
+
         .btn-search {
           background: #ff6b35;
           color: white;
@@ -993,11 +1001,11 @@ const MsisdnHistory = () => {
           align-items: center;
           gap: 8px;
         }
- 
+
         .btn-search:hover {
           background: #e55a2e;
         }
- 
+
         .btn-clear {
           background: #333;
           color: white;
@@ -1007,18 +1015,18 @@ const MsisdnHistory = () => {
           cursor: pointer;
           font-weight: 500;
         }
- 
+
         .btn-clear:hover {
           background: #555;
         }
- 
+
         .table-section {
           background: white;
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           overflow: visible;
         }
- 
+
         .table-header {
           display: flex;
           justify-content: space-between;
@@ -1027,7 +1035,7 @@ const MsisdnHistory = () => {
           background: #f8f9fa;
           border-bottom: 1px solid #dee2e6;
         }
- 
+
         .btn-excel {
           display: flex;
           align-items: center;
@@ -1041,25 +1049,25 @@ const MsisdnHistory = () => {
           font-weight: 500;
           font-size: 15px;
         }
- 
+
         .btn-excel:hover {
           background: #218838;
         }
- 
+
         .global-search {
           display: flex;
           align-items: center;
           gap: 10px;
           font-size: 15px;
         }
- 
+
         .global-search input {
           padding: 6px 12px;
           border: 1px solid #ddd;
           border-radius: 4px;
           outline: none;
         }
- 
+
         .match-counter {
           background: #ff6b35;
           color: white;
@@ -1070,19 +1078,19 @@ const MsisdnHistory = () => {
           min-width: 40px;
           text-align: center;
         }
- 
+
         .data-table {
           overflow-x: auto;
           max-height: none;
           overflow-y: visible;
         }
- 
+
         .data-table table {
           width: 100%;
           border-collapse: collapse;
           min-width: 1200px;
         }
- 
+
         .data-table th {
           background: #ff6b35;
           color: white;
@@ -1094,7 +1102,7 @@ const MsisdnHistory = () => {
           top: 0;
           z-index: 10;
         }
- 
+
         .header-select {
           display: block;
           width: 100%;
@@ -1106,52 +1114,52 @@ const MsisdnHistory = () => {
           margin-top: 5px;
           font-size: 14px;
         }
- 
+
         .data-table td {
           padding: 8px;
           border-bottom: 1px solid #dee2e6;
           font-size: 15px;
           vertical-align: top;
         }
- 
+
         .data-table tr:nth-child(even) {
           background: #f8f9fa;
         }
- 
+
         .data-table tr:hover {
           background: #e9ecef;
         }
- 
+
         .used-units-cell {
           min-width: 150px;
           max-width: 200px;
         }
- 
+
         .bnumber-cell {
           min-width: 140px;
           max-width: 180px;
         }
- 
+
         .used-units-container,
         .bnumber-container {
           display: flex;
           flex-direction: column;
           gap: 2px;
         }
- 
+
         .primary-value {
           font-weight: 600;
           color: #333;
           font-size: 14px;
           margin-bottom: 4px;
         }
- 
+
         .secondary-values {
           display: flex;
           flex-direction: column;
           gap: 2px;
         }
- 
+
         .payment-profile,
         .origin-node,
         .activation-code,
@@ -1163,7 +1171,7 @@ const MsisdnHistory = () => {
           border-radius: 3px;
           border-left: 3px solid #ff6b35;
         }
- 
+
         .payment-profile .label,
         .origin-node .label,
         .activation-code .label,
@@ -1171,13 +1179,13 @@ const MsisdnHistory = () => {
           font-weight: 600;
           color: #333;
         }
- 
+
         .details-cell {
           max-width: 250px;
           min-width: 210px;
           position: relative;
         }
- 
+
         .details-content {
           max-height: 80px;
           overflow-y: auto;
@@ -1188,7 +1196,7 @@ const MsisdnHistory = () => {
           padding: 4px;
           border-radius: 3px;
         }
- 
+
         .table-footer {
           padding: 15px 20px;
           background: #f8f9fa;
@@ -1196,12 +1204,12 @@ const MsisdnHistory = () => {
           color: #666;
           font-size: 15px;
         }
- 
+
         .matches-info {
           color: #ff6b35;
           font-weight: 500;
         }
- 
+
         @media (max-width: 768px) {
           .main-content {
             margin-left: 0;
@@ -1211,29 +1219,29 @@ const MsisdnHistory = () => {
             flex-direction: column;
             gap: 20px;
           }
- 
+
           .search-field {
             min-width: 100%;
           }
- 
+
           .table-header {
             flex-direction: column;
             gap: 15px;
             align-items: stretch;
           }
- 
+
           .data-table {
             font-size: 10px;
           }
- 
+
           .used-units-container {
             font-size: 10px;
           }
- 
+
           .bnumber-container {
             font-size: 10px;
           }
- 
+
           .payment-profile,
           .origin-node,
           .activation-code,
@@ -1241,13 +1249,13 @@ const MsisdnHistory = () => {
             font-size: 10px;
           }
         }
- 
+
         @media (max-width: 1024px) {
           .main-content {
             margin-left: 200px;
           }
         }
- 
+
         .sidebar-collapsed .main-content {
           margin-left: 60px;
         }
@@ -1255,5 +1263,5 @@ const MsisdnHistory = () => {
     </div>
   );
 };
- 
+
 export default MsisdnHistory;
