@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Download, Calendar, Loader } from 'lucide-react';
+import * as XLSX from 'xlsx';
  
 const MsisdnHistory = () => {
   const [msisdn, setMsisdn] = useState('50013115');
@@ -349,14 +350,16 @@ const MsisdnHistory = () => {
     console.log("historyData:", historyData);
  
     if (!historyData || historyData.length === 0) {
-      console.log("No data to export.");
+      alert("No data to export.");
       return;
     }
  
-    const formattedData = historyData.map((row) => {
+    // Prepare the data for Excel export
+    const formattedData = historyData.map((row, index) => {
       const usedUnitsData = formatUsedUnits(row);
       const bNumberData = formatBNumberSection(row, userRole);
  
+      // Format Used Units column
       let usedUnitsStr = usedUnitsData.primaryValue !== '-' ? usedUnitsData.primaryValue : '';
       const usedUnitsSecondaryParts = [];
       if (usedUnitsData.paymentProfile) {
@@ -372,6 +375,7 @@ const MsisdnHistory = () => {
         usedUnitsStr = '-';
       }
  
+      // Format B Number column
       let bNumberStr = '';
       if (bNumberData.primaryValue !== '-') {
         bNumberStr = bNumberData.primaryValue;
@@ -390,6 +394,7 @@ const MsisdnHistory = () => {
         bNumberStr = '-';
       }
  
+      // Format Details column
       let detailsStr = '';
       let parsedDetails = {};
       if (row.details) {
@@ -408,6 +413,11 @@ const MsisdnHistory = () => {
           detailsStr += `serviceCode: ${row.serviceCode}\n`;
         }
       }
+      
+      if (row.segmentationId && row.segmentationId !== '-') {
+        detailsStr += `segmentationId: ${row.segmentationId}\n`;
+      }
+      
       if (Object.keys(parsedDetails).length > 0) {
         detailsStr += JSON.stringify(parsedDetails, null, 2);
       }
@@ -418,7 +428,7 @@ const MsisdnHistory = () => {
         Balance: row.mainAccountBalance || row.balance || '-',
         ServiceIdentifier: selectedService === 'Adjustment' ? '-' : (row.EventType || row.serviceIdentifier || '-'),
         ChargingContext: selectedService === 'Adjustment' ? '-' : (contextMap(row.chargingContext) || row.chargingContext || row.service || '-'),
-       Traffic: row.TotalVolume || row.traffic || '-',
+        Traffic: row.TotalVolume || row.traffic || '-',
         UsedUnits: usedUnitsStr,
         BNumber_Voucher: bNumberStr,
         LocationNumber: formatLocationNumber(row.locationNumber) || '-',
@@ -426,7 +436,40 @@ const MsisdnHistory = () => {
       };
     });
  
-    console.log("Excel data prepared:", formattedData);
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(formattedData);
+    
+    // Auto-size columns
+    const colWidths = [];
+    const headers = Object.keys(formattedData[0] || {});
+    headers.forEach((header, i) => {
+      const maxLength = Math.max(
+        header.length,
+        ...formattedData.map(row => (row[header] || '').toString().length)
+      );
+      colWidths[i] = { wch: Math.min(maxLength + 2, 50) }; // Cap at 50 characters
+    });
+    ws['!cols'] = colWidths;
+ 
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, selectedService);
+    
+    // Generate filename with dates if available
+    let filename = `MSISDN_History_${selectedService}_${msisdn}`;
+    if (startDate && endDate) {
+      filename += `_${startDate}_to_${endDate}`;
+    } else if (startDate) {
+      filename += `_from_${startDate}`;
+    } else if (endDate) {
+      filename += `_until_${endDate}`;
+    }
+    filename += '.xlsx';
+    
+    // Download the file
+    XLSX.writeFile(wb, filename);
+    
+    console.log("Excel file exported successfully:", filename);
   };
  
   const highlightDaIdsInDetails = (details, daIdFilter, rowIndex, row, selectedService) => {
