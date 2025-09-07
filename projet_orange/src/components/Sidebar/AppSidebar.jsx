@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { RiMenuFoldLine, RiMenuUnfoldLine, RiArrowDownSFill, RiArrowUpSFill } from "react-icons/ri";
-import { AiOutlineUser, AiOutlineRead, AiFillQuestionCircle } from "react-icons/ai";
+import { AiOutlineUser, AiOutlineRead, AiFillQuestionCircle, AiOutlineUsergroupAdd } from "react-icons/ai";
 
 // Sidebar container
 const SidebarContainer = styled.div`
@@ -37,7 +37,7 @@ const LogoSection = styled.div`
   align-items: ${({ collapsed }) => (collapsed ? 'flex-start' : 'center')};
   flex-direction: ${({ collapsed }) => (collapsed ? 'column' : 'row')};
   gap: ${({ collapsed }) => (collapsed ? '8px' : '16px')};
-  min-height: 110px;
+  min-height: ${({ collapsed }) => (collapsed ? '110px' : '120px')};
 
   .logo-container {
     display: flex;
@@ -49,7 +49,7 @@ const LogoSection = styled.div`
   }
 
   .logo-image {
-    height: ${({ collapsed }) => (collapsed ? '50px' : '100px')};
+    height: ${({ collapsed }) => (collapsed ? '70px' : '80px')};
     transition: all 0.3s ease;
   }
 
@@ -58,22 +58,31 @@ const LogoSection = styled.div`
     border: none;
     color: #a0aec0;
     cursor: pointer;
-    padding: 6px;
+    padding: 8px;
     border-radius: 6px;
+    font-size: ${({ collapsed }) => (collapsed ? '26px' : '24px')};
+    transition: all 0.3s ease;
     &:hover {
       background: #333333;
       color: white;
+    }
+    svg {
+      width: ${({ collapsed }) => (collapsed ? '30px' : '24px')} !important;
+      height: ${({ collapsed }) => (collapsed ? '30px' : '24px')} !important;
+      padding-right: ${({ collapsed }) => (collapsed ? '7px' : '0px')};
+      transition: all 0.3s ease;
     }
   }
 `;
 
 const MenuSection = styled.div`
   flex: 1;
-  padding: 2px 0;
+  padding: 2px;
+  overflow-y: auto;
 `;
 
 const MenuGroup = styled.div`
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 `;
 
 // Menu button
@@ -82,11 +91,11 @@ const MenuButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: ${({ collapsed }) => (collapsed ? 'center' : 'space-between')};
-  padding: ${({ collapsed }) => (collapsed ? '12px 0' : '12px 20px')};
+  padding: ${({ collapsed }) => (collapsed ? '14px 0' : '12px 20px')};
   background: none;
   border: none;
   color: ${({ collapsed }) => (collapsed ? '#a0aec0' : '#718096')};
-  font-size: 15px;
+  font-size: ${({ collapsed }) => (collapsed ? '15px' : '17px')};
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -107,21 +116,23 @@ const MenuButton = styled.button`
   }
 
   .menu-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    min-width: 24px;
+    font-size: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
+    width: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
+    height: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
+    min-width: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
     display: flex !important;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     color: #a0aec0;
+    transition: all 0.3s ease;
   }
   .menu-icon svg {
-    width: 24px !important;
-    height: 24px !important;
+    width: ${({ collapsed }) => (collapsed ? '30px' : '32px')} !important;
+    height: ${({ collapsed }) => (collapsed ? '30px' : '32px')} !important;
     display: block !important;
     color: currentColor !important;
+    transition: all 0.3s ease;
   }
 
   .menu-text {
@@ -144,10 +155,10 @@ const SubMenuContainer = styled.div`
 const SubMenuItem = styled(Link)`
   display: flex;
   align-items: center;
-  padding: 12px ${({ collapsed }) => (collapsed ? '0' : '24px')} 12px ${({ collapsed }) => (collapsed ? '0' : '58px')};
+  padding: 10px ${({ collapsed }) => (collapsed ? '0' : '24px')} 10px ${({ collapsed }) => (collapsed ? '0' : '58px')};
   text-decoration: none;
   color: #718096;
-  font-size: 15px;
+  font-size: ${({ collapsed }) => (collapsed ? '15px' : '16px')};
   transition: all 0.2s ease;
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -168,7 +179,7 @@ const SubMenuItem = styled(Link)`
     position: absolute;
     left: 42px;
     color: #666666;
-    font-size: 14px;
+    font-size: 16px;
   }
 `;
 
@@ -213,6 +224,11 @@ const Sidebar = ({ onToggle }) => {
         { title: 'Offer', path: '/help/offer' },
         { title: 'Usage Counters', path: '/help/usage' }
       ]
+    },
+    {
+      title: 'User Management',
+      path: '/user-management',
+      icon: <AiOutlineUsergroupAdd />
     }
   ];
 
@@ -239,6 +255,19 @@ const Sidebar = ({ onToggle }) => {
     }
   };
 
+  const handleMenuClick = (item, e) => {
+    e.preventDefault();
+    
+    // If item has no subItems, navigate directly
+    if (!item.subItems || item.subItems.length === 0) {
+      window.location.href = item.path;
+      return;
+    }
+    
+    // Otherwise toggle submenu
+    toggleSubmenu(item.title);
+  };
+
   const isItemActive = (item) =>
     location.pathname === item.path ||
     (item.subItems && item.subItems.some(sub => location.pathname === sub.path));
@@ -250,13 +279,13 @@ const Sidebar = ({ onToggle }) => {
       <LogoSection collapsed={collapsed}>
         <div className="logo-container" onClick={() => window.location.href = '/customer/account'}>
           <img
-            src={collapsed ? "/assets/logo_compact.jpg" : "/assets/logo.webp"}
+            src={collapsed ? "/assets/SONIC_logo_collapsed.png" : "/assets/SONIC_logo.png"}
             alt="Logo"
             className="logo-image"
           />
         </div>
         <button className="hamburger" onClick={toggleCollapse}>
-          {collapsed ? <RiMenuUnfoldLine size={24} /> : <RiMenuFoldLine size={24} />}
+          {collapsed ? <RiMenuUnfoldLine size={collapsed ? 26 : 24} /> : <RiMenuFoldLine size={collapsed ? 26 : 24} />}
         </button>
       </LogoSection>
 
@@ -268,33 +297,32 @@ const Sidebar = ({ onToggle }) => {
           return (
             <MenuGroup key={index}>
               <MenuButton
-                onClick={(e) => {
-                  e.preventDefault();
-                  toggleSubmenu(item.title);
-                }}
+                onClick={(e) => handleMenuClick(item, e)}
                 className={isActive ? 'active' : ''}
                 collapsed={collapsed}
-                title={collapsed ? `Click to expand ${item.title}` : ''}
+                title={collapsed ? `Click to ${item.subItems && item.subItems.length > 0 ? 'expand' : 'open'} ${item.title}` : ''}
               >
                 <div className="menu-content">
                   <div className="menu-icon">{item.icon}</div>
                   <span className="menu-text">{item.title}</span>
                 </div>
-                {!collapsed && (isOpen ? item.iconOpened : item.iconClosed)}
+                {!collapsed && item.subItems && item.subItems.length > 0 && (isOpen ? item.iconOpened : item.iconClosed)}
               </MenuButton>
 
-              <SubMenuContainer $isOpen={isOpen} collapsed={collapsed}>
-                {item.subItems.map((subItem, subIndex) => (
-                  <SubMenuItem
-                    key={subIndex}
-                    to={subItem.path}
-                    className={isSubItemActive(subItem) ? 'active' : ''}
-                    collapsed={collapsed}
-                  >
-                    {!collapsed && subItem.title}
-                  </SubMenuItem>
-                ))}
-              </SubMenuContainer>
+              {item.subItems && item.subItems.length > 0 && (
+                <SubMenuContainer $isOpen={isOpen} collapsed={collapsed}>
+                  {item.subItems.map((subItem, subIndex) => (
+                    <SubMenuItem
+                      key={subIndex}
+                      to={subItem.path}
+                      className={isSubItemActive(subItem) ? 'active' : ''}
+                      collapsed={collapsed}
+                    >
+                      {!collapsed && subItem.title}
+                    </SubMenuItem>
+                  ))}
+                </SubMenuContainer>
+              )}
             </MenuGroup>
           );
         })}
