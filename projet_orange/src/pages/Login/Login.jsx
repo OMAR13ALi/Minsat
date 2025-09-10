@@ -16,31 +16,32 @@ const Login = () => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-        "/auth/login",
-        {
-          email: email,
-          password: password,
-        },
-        {
-          withCredentials: true,
-        }
+        "http://localhost:5000/users/login",
+        { email, password }
       );
+    console.log("🔍 Utilisateur connecté:", data.user); // 👈 Ajoute ça
+
       setError(false);
       setErrorMsg("");
-      if (data.user.status === "blocked") {
+
+      if (data.user.status === 0) {
         setError(true);
-        setErrorMsg("Your account has been blocked. Please contact the admin.");
+        setErrorMsg("Your account has been blocked or is inactive.");
         return;
       }
+       // Sauvegarde du token
+
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       setCurrentUser(data.user);
-      navigate("/home");
+      navigate("/dashboard");
+
     } catch (err) {
       setError(true);
-      setErrorMsg(err.response.data.msg);
+      setErrorMsg(err.response?.data?.message || "Login failed.");
     }
   };
-
   return (
     <div className="login">
       <div className="card">

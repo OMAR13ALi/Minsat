@@ -1,19 +1,18 @@
-version: "3.9"
 services:
   backend:
     build: ./api_history
     container_name: api_history
     ports:
-      - "5000:5000"  # Map host port 5000 to container port 5000
+      - "5002:5002"
     volumes:
-      - ./api_history:/app  # Mount for live code reloading in dev
+      - ./api_history:/app
     environment:
-      - FLASK_ENV=development  # Enables Flask debug mode
+      - FLASK_ENV=development
 
   frontend:
     build: ./projet_orange
     container_name: frontend
     ports:
-      - "5173:80"  # Map host port 5173 to Nginx's port 80
+      - "5173:80"
     depends_on:
-      - backend  # Ensures backend starts first (optional but good practice)
+      - backend

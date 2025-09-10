@@ -156,8 +156,15 @@ const DropdownMenu = styled.div`
 
 const Navbar = () => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [user, setUser] = useState(null); // 👈 état user
   const userDropdownRef = useRef(null);
 
+   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
   // Close dropdown if click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -172,10 +179,6 @@ const Navbar = () => {
     };
   }, []);
 
-  const handleProfileClick = () => {
-    setShowUserDropdown(false);
-    window.location.href = '/profile';
-  };
 
   const handleLogout = () => {
     try {
@@ -210,16 +213,13 @@ const Navbar = () => {
         >
           <UserAvatar>👤</UserAvatar>
           <UserInfo>
-            <span className="user-name">Bilel BOUSSAA</span>
-            <span className="user-id">( BB71947 )</span>
+            <span className="user-name">{user?.username || "Utilisateur"}</span>
+            {/* <span className="user-id">( BB71947 )</span> */}
           </UserInfo>
           
           {showUserDropdown && (
             <DropdownMenu style={{ right: 0, left: 'auto' }}>
-              <div className="dropdown-item" onClick={handleProfileClick}>
-                <FiUser className="dropdown-icon" />
-                Profile
-              </div>
+             
               <div className="dropdown-item" onClick={handleDropdownLogout}>
                 <FiLogOut className="dropdown-icon" />
                 Logout

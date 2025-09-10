@@ -6,7 +6,7 @@ const MsisdnHistory = () => {
   const [msisdn, setMsisdn] = useState('50013115');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [selectedService, setSelectedService] = useState('PAM');
+  const [selectedService, setSelectedService] = useState('All');
   const [globalSearch, setGlobalSearch] = useState('');
   const [daIdFilter, setDaIdFilter] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);

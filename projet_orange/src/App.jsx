@@ -81,7 +81,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Root route redirects to dashboard for development */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           
           {/* Public routes (no sidebar/navbar) */}
           <Route path="/login" element={<Login />} />

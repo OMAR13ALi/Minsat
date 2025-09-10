@@ -1,63 +1,151 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Edit2, Check, Ban, Users, Filter } from 'lucide-react';
 
 const UserManagementAdmin = () => {
   const [showInactiveOnly, setShowInactiveOnly] = useState(false);
-  
-  // Sample user data
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      username: 'john_doe',
-      email: 'john.doe@orange.com',
-      service: 'DFI',
-      validated: true
-    },
-    {
-      id: 2,
-      username: 'jane_smith',
-      email: 'jane.smith@orange.com',
-      service: 'IN',
-      validated: false
-    },
-    {
-      id: 3,
-      username: 'mike_wilson',
-      email: 'mike.wilson@orange.com',
-      service: 'DSI',
-      validated: true
-    },
-    {
-      id: 4,
-      username: 'sarah_jones',
-      email: 'sarah.jones@orange.com',
-      service: 'DFI',
-      validated: false
-    },
-    {
-      id: 5,
-      username: 'alex_brown',
-      email: 'alex.brown@orange.com',
-      service: 'IN',
-      validated: false
-    }
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [editService, setEditService] = useState('');
 
   const services = ['DFI', 'IN', 'DSI'];
 
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/users/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        const data = await response.json();
+        const mappedUsers = data.map(user => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          service: user.class,
+          validated: user.status > 0,
+        }));
+        setUsers(mappedUsers);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Unable to load users. Please check your connection or the server.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Validate user via API
+  const handleValidateUserApi = async (email, name, service) => {
+    if (!email || !name || !service) {
+      console.error("Missing fields:", { email, name, service });
+      setError("All fields are required for validation.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5000/users/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          correctClass: service,
+          email,
+          name
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("Validation successful:", result.message);
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.email === email
+            ? { ...user, validated: true, service }
+            : user
+        )
+      );
+    } catch (err) {
+      console.error("Error validating user:", err);
+      setError(err.message || "Validation failed.");
+    }
+  };
+
+  // Block user via API
+  const handleBlockUser = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/users/block/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 0 }), // Assuming status: 0 means blocked
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("User blocked successfully:", result.message);
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, validated: false } : user
+        )
+      );
+    } catch (err) {
+      console.error("Error blocking user:", err);
+      setError(err.message || "Failed to block user.");
+    }
+  };
+
+  // Update user service via API
+  const handleSaveService = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/users/update/${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ class: editService }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("User service updated successfully:", result.message);
+
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, service: editService } : user
+        )
+      );
+      setEditingUser(null);
+    } catch (err) {
+      console.error("Error updating user service:", err);
+      setError(err.message || "Failed to update user service.");
+    }
+  };
+
   const handleEditService = (user) => {
     setEditingUser(user.id);
     setEditService(user.service);
-  };
-
-  const handleSaveService = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, service: editService } : user
-    ));
-    setEditingUser(null);
   };
 
   const handleCancelEdit = () => {
@@ -65,19 +153,7 @@ const UserManagementAdmin = () => {
     setEditService('');
   };
 
-  const handleValidateUser = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, validated: true } : user
-    ));
-  };
-
-  const handleBlockUser = (userId) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, validated: false } : user
-    ));
-  };
-
-  const filteredUsers = showInactiveOnly 
+  const filteredUsers = showInactiveOnly
     ? users.filter(user => !user.validated)
     : users;
 
@@ -126,7 +202,9 @@ const UserManagementAdmin = () => {
       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
       borderRadius: '12px',
       overflow: 'hidden',
-      marginBottom: '24px'
+      marginBottom: '24px',
+      height: '700px', // Fixed height for scrolling
+      overflowY: 'auto'
     },
     tableHeader: {
       backgroundColor: '#000000',
@@ -279,6 +357,17 @@ const UserManagementAdmin = () => {
       color: '#6b7280',
       fontSize: '20px',
       marginTop: '16px'
+    },
+    loading: {
+      textAlign: 'center',
+      padding: '24px',
+      color: '#6b7280'
+    },
+    error: {
+      textAlign: 'center',
+      padding: '24px',
+      color: '#dc2626',
+      fontWeight: '500'
     }
   };
 
@@ -290,12 +379,8 @@ const UserManagementAdmin = () => {
         <button
           style={styles.inactiveButton}
           onClick={() => setShowInactiveOnly(!showInactiveOnly)}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = showInactiveOnly ? '#c2410c' : '#e5e7eb';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = showInactiveOnly ? '#ea580c' : '#f3f4f6';
-          }}
+          onMouseOver={(e) => { e.target.style.backgroundColor = showInactiveOnly ? '#c2410c' : '#e5e7eb'; }}
+          onMouseOut={(e) => { e.target.style.backgroundColor = showInactiveOnly ? '#ea580c' : '#f3f4f6'; }}
         >
           <Users style={{ width: '20px', height: '20px', marginRight: '8px' }} />
           Users Inactive
@@ -322,7 +407,11 @@ const UserManagementAdmin = () => {
 
         {/* Table Body */}
         <div style={styles.tableBody}>
-          {filteredUsers.length === 0 ? (
+          {loading ? (
+            <div style={styles.loading}>Loading...</div>
+          ) : error ? (
+            <div style={styles.error}>{error}</div>
+          ) : filteredUsers.length === 0 ? (
             <div style={styles.emptyState}>
               <Filter style={{ width: '48px', height: '48px', color: '#9ca3af', margin: '0 auto' }} />
               <p style={styles.emptyStateText}>
@@ -334,20 +423,11 @@ const UserManagementAdmin = () => {
               <div
                 key={user.id}
                 style={styles.tableRow}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                }}
+                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
+                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; }}
               >
-                {/* Username */}
                 <div style={styles.username}>{user.username}</div>
-
-                {/* Email */}
                 <div style={styles.email}>{user.email}</div>
-
-                {/* Service */}
                 <div>
                   {editingUser === user.id ? (
                     <select
@@ -361,19 +441,17 @@ const UserManagementAdmin = () => {
                     </select>
                   ) : (
                     <span
-                      style={{
+                      style={{ 
                         ...styles.serviceBadge,
                         ...(user.service === 'DFI' ? styles.dfiService :
-                           user.service === 'IN' ? styles.inService :
-                           styles.dsiService)
+                          user.service === 'IN' ? styles.inService :
+                          styles.dsiService)
                       }}
                     >
                       {user.service}
                     </span>
                   )}
                 </div>
-
-                {/* Status */}
                 <div>
                   <span
                     style={{
@@ -384,8 +462,6 @@ const UserManagementAdmin = () => {
                     {user.validated ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-
-                {/* Actions */}
                 <div style={styles.actionsContainer}>
                   {editingUser === user.id ? (
                     <>
@@ -431,7 +507,7 @@ const UserManagementAdmin = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleValidateUser(user.id)}
+                          onClick={() => handleValidateUserApi(user.email, user.username, user.service)}                        
                           style={{ ...styles.actionButton, ...styles.validateButton }}
                           onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
                           onMouseOut={(e) => e.target.style.backgroundColor = '#16a34a'}
@@ -460,7 +536,6 @@ const UserManagementAdmin = () => {
             <p style={styles.statValue}>{users.length}</p>
           </div>
         </div>
-
         <div style={styles.statCard}>
           <div style={styles.statIcon}>
             <Check style={{ width: '32px', height: '32px', color: '#16a34a' }} />
@@ -472,7 +547,6 @@ const UserManagementAdmin = () => {
             </p>
           </div>
         </div>
-
         <div style={styles.statCard}>
           <div style={styles.statIcon}>
             <Ban style={{ width: '32px', height: '32px', color: '#dc2626' }} />

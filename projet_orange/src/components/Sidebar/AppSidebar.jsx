@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { RiMenuFoldLine, RiMenuUnfoldLine, RiArrowDownSFill, RiArrowUpSFill } from "react-icons/ri";
@@ -37,7 +37,7 @@ const LogoSection = styled.div`
   align-items: ${({ collapsed }) => (collapsed ? 'flex-start' : 'center')};
   flex-direction: ${({ collapsed }) => (collapsed ? 'column' : 'row')};
   gap: ${({ collapsed }) => (collapsed ? '8px' : '16px')};
-  min-height: ${({ collapsed }) => (collapsed ? '110px' : '120px')};
+  min-height: 110px;
 
   .logo-container {
     display: flex;
@@ -49,7 +49,7 @@ const LogoSection = styled.div`
   }
 
   .logo-image {
-    height: ${({ collapsed }) => (collapsed ? '70px' : '80px')};
+    height: ${({ collapsed }) => (collapsed ? '50px' : '100px')};
     transition: all 0.3s ease;
   }
 
@@ -58,31 +58,22 @@ const LogoSection = styled.div`
     border: none;
     color: #a0aec0;
     cursor: pointer;
-    padding: 8px;
+    padding: 6px;
     border-radius: 6px;
-    font-size: ${({ collapsed }) => (collapsed ? '26px' : '24px')};
-    transition: all 0.3s ease;
     &:hover {
       background: #333333;
       color: white;
-    }
-    svg {
-      width: ${({ collapsed }) => (collapsed ? '30px' : '24px')} !important;
-      height: ${({ collapsed }) => (collapsed ? '30px' : '24px')} !important;
-      padding-right: ${({ collapsed }) => (collapsed ? '7px' : '0px')};
-      transition: all 0.3s ease;
     }
   }
 `;
 
 const MenuSection = styled.div`
   flex: 1;
-  padding: 2px;
-  overflow-y: auto;
+  padding: 2px 0;
 `;
 
 const MenuGroup = styled.div`
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 `;
 
 // Menu button
@@ -91,11 +82,11 @@ const MenuButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: ${({ collapsed }) => (collapsed ? 'center' : 'space-between')};
-  padding: ${({ collapsed }) => (collapsed ? '14px 0' : '12px 20px')};
+  padding: ${({ collapsed }) => (collapsed ? '12px 0' : '12px 20px')};
   background: none;
   border: none;
   color: ${({ collapsed }) => (collapsed ? '#a0aec0' : '#718096')};
-  font-size: ${({ collapsed }) => (collapsed ? '15px' : '17px')};
+  font-size: 15px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -116,23 +107,76 @@ const MenuButton = styled.button`
   }
 
   .menu-icon {
-    font-size: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
-    width: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
-    height: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
-    min-width: ${({ collapsed }) => (collapsed ? '30px' : '32px')};
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
     display: flex !important;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
     color: #a0aec0;
-    transition: all 0.3s ease;
   }
   .menu-icon svg {
-    width: ${({ collapsed }) => (collapsed ? '30px' : '32px')} !important;
-    height: ${({ collapsed }) => (collapsed ? '30px' : '32px')} !important;
+    width: 24px !important;
+    height: 24px !important;
     display: block !important;
     color: currentColor !important;
-    transition: all 0.3s ease;
+  }
+
+  .menu-text {
+    white-space: nowrap;
+    display: ${({ collapsed }) => (collapsed ? 'none' : 'inline')};
+  }
+`;
+
+// Menu link for items without subitems
+const MenuLink = styled(Link)`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: ${({ collapsed }) => (collapsed ? 'center' : 'space-between')};
+  padding: ${({ collapsed }) => (collapsed ? '12px 0' : '12px 20px')};
+  background: none;
+  border: none;
+  color: ${({ collapsed }) => (collapsed ? '#a0aec0' : '#718096')};
+  font-size: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+
+  &:hover {
+    background: #333333;
+    color: #e2e8f0;
+  }
+  &.active {
+    background: #333333;
+    color: white;
+  }
+
+  .menu-content {
+    display: flex;
+    align-items: center;
+    gap: ${({ collapsed }) => (collapsed ? '0' : '16px')};
+  }
+
+  .menu-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #a0aec0;
+  }
+  .menu-icon svg {
+    width: 24px !important;
+    height: 24px !important;
+    display: block !important;
+    color: currentColor !important;
   }
 
   .menu-text {
@@ -155,10 +199,10 @@ const SubMenuContainer = styled.div`
 const SubMenuItem = styled(Link)`
   display: flex;
   align-items: center;
-  padding: 10px ${({ collapsed }) => (collapsed ? '0' : '24px')} 10px ${({ collapsed }) => (collapsed ? '0' : '58px')};
+  padding: 12px ${({ collapsed }) => (collapsed ? '0' : '24px')} 12px ${({ collapsed }) => (collapsed ? '0' : '58px')};
   text-decoration: none;
   color: #718096;
-  font-size: ${({ collapsed }) => (collapsed ? '15px' : '16px')};
+  font-size: 15px;
   transition: all 0.2s ease;
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -179,7 +223,7 @@ const SubMenuItem = styled(Link)`
     position: absolute;
     left: 42px;
     color: #666666;
-    font-size: 16px;
+    font-size: 14px;
   }
 `;
 
@@ -187,8 +231,29 @@ const Sidebar = ({ onToggle }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState([]); 
   const location = useLocation();
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
   const menuItems = [
+    ...(user?.class?.toLowerCase() === "admin"
+      ? [
+          {
+            title: 'User Management',
+            path: '/user-management',
+            icon: <AiOutlineUsergroupAdd />
+            // No subItems for User Management
+          }
+        ]
+      : []),
     {
       title: 'Customer Care',
       path: '/customer',
@@ -197,8 +262,7 @@ const Sidebar = ({ onToggle }) => {
       iconOpened: <RiArrowUpSFill />,
       subItems: [
         { title: 'Account', path: '/customer/account' },
-        { title: 'History', path: '/customer/msisdn-history' },
-        { title: 'Trace 4G', path: '/customer/trace-4G' }
+        { title: 'History', path: '/customer/msisdn-history' }
       ]
     },
     {
@@ -208,7 +272,6 @@ const Sidebar = ({ onToggle }) => {
       iconClosed: <RiArrowDownSFill />,
       iconOpened: <RiArrowUpSFill />,
       subItems: [
-        { title: 'Serial Number', path: '/vs/serial-number' },
         { title: 'Activation Code', path: '/vs/activation-code' }
       ]
     },
@@ -224,11 +287,6 @@ const Sidebar = ({ onToggle }) => {
         { title: 'Offer', path: '/help/offer' },
         { title: 'Usage Counters', path: '/help/usage' }
       ]
-    },
-    {
-      title: 'User Management',
-      path: '/user-management',
-      icon: <AiOutlineUsergroupAdd />
     }
   ];
 
@@ -253,19 +311,6 @@ const Sidebar = ({ onToggle }) => {
           : [...prev, title]
       );
     }
-  };
-
-  const handleMenuClick = (item, e) => {
-    e.preventDefault();
-    
-    // If item has no subItems, navigate directly
-    if (!item.subItems || item.subItems.length === 0) {
-      window.location.href = item.path;
-      return;
-    }
-    
-    // Otherwise toggle submenu
-    toggleSubmenu(item.title);
   };
 
   const isItemActive = (item) =>
@@ -296,32 +341,48 @@ const Sidebar = ({ onToggle }) => {
 
           return (
             <MenuGroup key={index}>
-              <MenuButton
-                onClick={(e) => handleMenuClick(item, e)}
-                className={isActive ? 'active' : ''}
-                collapsed={collapsed}
-                title={collapsed ? `Click to ${item.subItems && item.subItems.length > 0 ? 'expand' : 'open'} ${item.title}` : ''}
-              >
-                <div className="menu-content">
-                  <div className="menu-icon">{item.icon}</div>
-                  <span className="menu-text">{item.title}</span>
-                </div>
-                {!collapsed && item.subItems && item.subItems.length > 0 && (isOpen ? item.iconOpened : item.iconClosed)}
-              </MenuButton>
-
-              {item.subItems && item.subItems.length > 0 && (
-                <SubMenuContainer $isOpen={isOpen} collapsed={collapsed}>
-                  {item.subItems.map((subItem, subIndex) => (
-                    <SubMenuItem
-                      key={subIndex}
-                      to={subItem.path}
-                      className={isSubItemActive(subItem) ? 'active' : ''}
-                      collapsed={collapsed}
-                    >
-                      {!collapsed && subItem.title}
-                    </SubMenuItem>
-                  ))}
-                </SubMenuContainer>
+              {item.subItems ? (
+                <>
+                  <MenuButton
+                    onClick={(e) => {
+                      e.preventDefault();
+                      toggleSubmenu(item.title);
+                    }}
+                    className={isActive ? 'active' : ''}
+                    collapsed={collapsed}
+                    title={collapsed ? `Click to expand ${item.title}` : ''}
+                  >
+                    <div className="menu-content">
+                      <div className="menu-icon">{item.icon}</div>
+                      <span className="menu-text">{item.title}</span>
+                    </div>
+                    {!collapsed && (isOpen ? item.iconOpened : item.iconClosed)}
+                  </MenuButton>
+                  <SubMenuContainer $isOpen={isOpen} collapsed={collapsed}>
+                    {item.subItems.map((subItem, subIndex) => (
+                      <SubMenuItem
+                        key={subIndex}
+                        to={subItem.path}
+                        className={isSubItemActive(subItem) ? 'active' : ''}
+                        collapsed={collapsed}
+                      >
+                        {!collapsed && subItem.title}
+                      </SubMenuItem>
+                    ))}
+                  </SubMenuContainer>
+                </>
+              ) : (
+                <MenuLink
+                  to={item.path}
+                  className={isActive ? 'active' : ''}
+                  collapsed={collapsed}
+                  title={collapsed ? item.title : ''}
+                >
+                  <div className="menu-content">
+                    <div className="menu-icon">{item.icon}</div>
+                    <span className="menu-text">{item.title}</span>
+                  </div>
+                </MenuLink>
               )}
             </MenuGroup>
           );

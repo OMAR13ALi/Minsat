@@ -1,34 +1,40 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Add this import
+import { useNavigate } from "react-router-dom";
 
-const LookupVoucherACForm = () => {
-  const [msisdn, setMsisdn] = useState("");
+const LookupVoucherForm = () => {
+  const [choice, setChoice] = useState("serial"); // default: serial number
+  const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
-  const navigate = useNavigate(); // Add this hook
-  
+  const navigate = useNavigate();
+
   const handleSend = () => {
-    if (msisdn.length !== 14) {
-      setError("Le numéro de série doit contenir exactement 14 chiffres.");
+    const expectedLength = choice === "serial" ? 12 : 14;
+
+    if (inputValue.length !== expectedLength) {
+      setError(
+        `Le ${choice === "serial" ? "numéro de série" : "code d'activation"} doit contenir exactement ${expectedLength} chiffres.`
+      );
     } else {
       setError("");
-      console.log("Sending Activation Code:", msisdn);
-      
-      // Navigate to vs/info page with activation code as parameter
-      navigate(`/vs/info?activation=${msisdn}`);
-      
-      // Alternative: If you want to pass it as a route parameter
-      // navigate(`/vs/info/${msisdn}`);
-      
-      // Alternative: If you want to pass it as state
-      // navigate('/vs/info', { state: { activation: msisdn, type: 'activation' } });
+      console.log(
+        `Sending ${choice === "serial" ? "Serial Number" : "Activation Code"}:`,
+        inputValue
+      );
+
+      // Navigation avec paramètre
+      navigate(
+        choice === "serial"
+          ? `/vs/info?serial=${inputValue}`
+          : `/vs/info?activation=${inputValue}`
+      );
     }
   };
-  
+
   const handleClear = () => {
-    setMsisdn("");
-    setError(""); // Clear error too
+    setInputValue("");
+    setError("");
   };
-  
+
   return (
     <div className="main-content">
       <div className="content-header">
@@ -37,31 +43,56 @@ const LookupVoucherACForm = () => {
         </div>
         <h1>Lookup Voucher Information</h1>
       </div>
-      
+
       <div className="msisdn-card">
-        <label htmlFor="serial">Activation Code :</label>
+        <label htmlFor="choice">LookupVoucher</label>
+        <select
+          id="choice"
+          value={choice}
+          onChange={(e) => {
+            setChoice(e.target.value);
+            setInputValue("");
+            setError("");
+          }}
+        >
+          <option value="serial">Serial Number (12-Digit)</option>
+          <option value="activation">Activation Code (14-Digit)</option>
+        </select>
+
+        <label htmlFor="inputField">
+          {choice === "serial" ? "Serial Number  :" : "Activation Code :"}
+        </label>
         <div className="msisdn-input">
           <input
-            id="serial"
+            id="inputField"
             type="text"
-            placeholder="14-digit Activation Code"
-            value={msisdn}
+            placeholder={
+              choice === "serial"
+                ? "12-digit Serial Number"
+                : "14-digit Activation Code"
+            }
+            value={inputValue}
             onChange={(e) => {
               const onlyNumbers = e.target.value.replace(/\D/g, "");
-              if (onlyNumbers.length <= 14) {
-                setMsisdn(onlyNumbers);
-                setError(""); // Clear error on input
+              const maxLen = choice === "serial" ? 12 : 14;
+              if (onlyNumbers.length <= maxLen) {
+                setInputValue(onlyNumbers);
+                setError("");
               }
             }}
-            maxLength={14}
+            maxLength={choice === "serial" ? 12 : 14}
           />
         </div>
+
         {error && <div className="error-message">{error}</div>}
+
         <div className="button-group">
           <button
             className="send"
             onClick={handleSend}
-            disabled={msisdn.length !== 14}
+            disabled={
+              inputValue.length !== (choice === "serial" ? 12 : 14)
+            }
           >
             Send
           </button>
@@ -118,10 +149,20 @@ const LookupVoucherACForm = () => {
 
         label {
           font-weight: bold;
-          margin-bottom: 1.5rem;
+          margin-top: 1rem;
+          margin-bottom: 1rem;
           display: block;
           color: #333;
-          font-size: 1.4rem;
+          font-size: 1.2rem;
+        }
+
+        select {
+          width: 100%;
+          padding: 0.8rem;
+          border: 2px solid #ddd;
+          border-radius: 8px;
+          margin-bottom: 2rem;
+          font-size: 1.2rem;
         }
 
         .msisdn-input {
@@ -211,48 +252,9 @@ const LookupVoucherACForm = () => {
           text-align: center;
           font-weight: 500;
         }
-
-        @media (max-width: 768px) {
-          .main-content {
-            padding: 1rem;
-            padding-top: 1rem;
-          }
-
-          .content-header h1 {
-            font-size: 24px;
-          }
-
-          .header-icon {
-            font-size: 20px;
-            padding: 12px 16px;
-          }
-
-          .msisdn-card {
-            padding: 2.5rem;
-            max-width: 100%;
-          }
-
-          label {
-            font-size: 1.2rem;
-          }
-
-          .msisdn-input {
-            height: 60px;
-          }
-
-          .msisdn-input input {
-            font-size: 1.2rem;
-          }
-
-          .button-group button {
-            font-size: 1.1rem;
-            padding: 1rem 2rem;
-            min-width: 130px;
-          }
-        }
       `}</style>
     </div>
   );
 };
 
-export default LookupVoucherACForm;
+export default LookupVoucherForm;

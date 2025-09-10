@@ -2,28 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 const ServiceIdentifier = () => {
   // Service Identifier Data
-  const [serviceIdentifierData] = useState([
-    { id: 0, name: 'Voice', context: 'CS1+ V.1.0' },
-    { id: 0, name: 'Voice', context: 'CAPv2 V.1.0' },
-    { id: 0, name: 'Voice', context: 'CIPSS7' },
-    { id: 1, name: 'SMS', context: 'SCAP_V.2.0' },
-    { id: 1, name: 'Fax', context: 'CS1+ V.1.0' },
-    { id: 1, name: 'Fax', context: 'CIPSS7' },
-    { id: 1, name: 'Fax', context: 'CAPv2 V.1.0' },
-    { id: 2, name: 'Data', context: 'CAPv2 V.1.0' },
-    { id: 2, name: 'Data', context: 'CIPSS7' },
-    { id: 2, name: 'Data', context: 'CS1+ V.1.0' },
-    // Generate more data for demonstration
-    ...Array.from({ length: 94 }, (_, i) => ({
-      id: Math.floor(Math.random() * 10),
-      name: ['Voice', 'SMS', 'Fax', 'Data'][Math.floor(Math.random() * 4)],
-      context: ['CS1+ V.1.0', 'CAPv2 V.1.0', 'CIPSS7', 'SCAP_V.2.0'][Math.floor(Math.random() * 4)]
-    }))
-  ]);
-
-
-
-
+const [serviceIdentifierData, setServiceIdentifierData] = useState([]);
 
   // State for each table
   const [serviceIdentifierState, setServiceIdentifierState] = useState({
@@ -33,10 +12,6 @@ const ServiceIdentifier = () => {
     filteredData: [],
     filters: { id: '', name: '', context: '' }
   });
-
-
-
-
 
   // Apply filters function
   const applyFilters = (data, search, filters) => {
@@ -65,11 +40,18 @@ const ServiceIdentifier = () => {
 
   // Update filtered data when search or filters change
   useEffect(() => {
-    const filtered = applyFilters(serviceIdentifierData, serviceIdentifierState.search, serviceIdentifierState.filters);
-    setServiceIdentifierState(prev => ({ ...prev, filteredData: filtered, page: 1 }));
-  }, [serviceIdentifierState.search, serviceIdentifierState.filters]);
-
-
+  const fetchData = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/help/si");
+      if (!res.ok) throw new Error("Erreur API ServiceIdentifiers");
+      const data = await res.json();
+      setServiceIdentifierState(prev => ({ ...prev, filteredData: data }));
+    } catch (err) {
+      console.error("❌ Erreur fetch ServiceIdentifiers:", err);
+    }
+  };
+  fetchData();
+}, []);
 
 
 
@@ -384,9 +366,9 @@ const ServiceIdentifier = () => {
 
   // Column definitions
   const serviceIdentifierColumns = [
-    { header: 'Id', key: 'id' },
-    { header: 'Name', key: 'name' },
-    { header: 'Context', key: 'context' }
+    { header: 'Id', key: 'Id33' },
+    { header: 'Name', key: 'Comment34' },
+    { header: 'Context', key: 'Comment' }
   ];
 
 

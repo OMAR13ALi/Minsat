@@ -2,35 +2,36 @@ import React, { useState, useEffect } from 'react';
 
 const Usage = () => {
   // Usage Counter Data
-  const [usageCounterData] = useState([
-    { counter: 100, description: 'Monetary Counter Roaming' },
-    { counter: 101, description: 'Monetary Counter Roaming Monthly Usage' },
-    { counter: 150, description: 'Transfert Sold' },
-    { counter: 151, description: 'Transfert Money First' },
-    { counter: 152, description: 'Transfert Money Second' },
-    { counter: 153, description: 'Transfert Money Third' },
-    { counter: 200, description: 'Counter Debit Decrochage' },
-    { counter: 500, description: 'Data Transfert Daily Counter' },
-    { counter: 501, description: 'Data Transfert monthly Counter' },
-    { counter: 502, description: 'Data Transfert Daily Transaction Counter' },
-    // Only 11 entries total as shown in the image
-    { counter: 600, description: 'Voice Counter International' }
-  ]);
+  const [usageCounterData, setUsageCounterData] = useState([]);
 
   // State for usage counter table
-  const [usageCounterState, setUsageCounterState] = useState({
+ const [usageCounterState, setUsageCounterState] = useState({
     entries: 10,
     search: '',
     page: 1,
     filteredData: [],
     filters: { counter: '', description: '' }
   });
+  useEffect(() => {
+  const fetchUsage = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/help/uc');
+      const data = await res.json(); // ✅ parse la réponse JSON
+
+      setUsageCounterData(data);
+      setUsageCounterState(prev => ({ ...prev, filteredData: data }));
+    } catch (err) {
+      console.error('❌ Erreur lors du fetch usage counters:', err);
+    }
+  };
+
+    fetchUsage();
+  }, []);
 
   // Apply filters function
   const applyFilters = (data, search, filters) => {
     let filtered = data;
 
-    // Global search
     if (search) {
       filtered = filtered.filter(item =>
         Object.values(item).some(value =>
@@ -50,17 +51,15 @@ const Usage = () => {
 
     return filtered;
   };
+  
 
   // Update filtered data when search or filters change
-  useEffect(() => {
+   useEffect(() => {
     const filtered = applyFilters(usageCounterData, usageCounterState.search, usageCounterState.filters);
     setUsageCounterState(prev => ({ ...prev, filteredData: filtered, page: 1 }));
-  }, [usageCounterState.search, usageCounterState.filters]);
+  }, [usageCounterState.search, usageCounterState.filters, usageCounterData]);
 
   // Initialize filtered data
-  useEffect(() => {
-    setUsageCounterState(prev => ({ ...prev, filteredData: usageCounterData }));
-  }, []);
 
   // Styles
   const containerStyle = {

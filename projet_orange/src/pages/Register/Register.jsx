@@ -5,7 +5,6 @@ import { useState } from "react";
 
 const Register = () => {
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [type, setType] = useState("");
@@ -16,16 +15,12 @@ const Register = () => {
     e.preventDefault();
     try {
       await axios.post(
-        "/auth/register",
+        "http://localhost:5000/users/register",
         {
-          username: username,
-          email: email,
-          password: password,
-          phone: phone,
-          accountType: type,
-        },
-        {
-          withCredentials: true,
+          username,
+          email,
+          password,
+          class: type,
         }
       );
       setError(false);
@@ -33,7 +28,7 @@ const Register = () => {
       setRedirect(true);
     } catch (err) {
       setError(true);
-      setErrorMsg(err.response.data.msg);
+      setErrorMsg(err.response?.data?.message || "Erreur de connexion au serveur");
     }
   };
   if (redirect) {
@@ -66,11 +61,7 @@ const Register = () => {
               placeholder="Email"
               onChange={(e) => setEmail(e.target.value)}
             />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              onChange={(e) => setPhone(e.target.value)}
-            />
+           
             <input
               type="password"
               placeholder="Password"

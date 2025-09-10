@@ -2,49 +2,34 @@ import React, { useState, useEffect } from 'react';
 
 const Offer = () => {
   // Offer Data
-  const [offerData] = useState([
-    { id: 1, description: 'Fake Offer for DA reselection' },
-    { id: 5, description: 'First refill 1DT Flag' },
-    { id: 6, description: 'SOS tag' },
-    { id: 7, description: 'First Refill Flag' },
-    { id: 8, description: 'Offre disponible' },
-    { id: 9, description: 'Tag jeu sur recharge JBL' },
-    { id: 10, description: 'Promo Cible 1' },
-    { id: 11, description: 'Promo Cible 2' },
-    { id: 12, description: 'Promo Cible Porta IN' },
-    { id: 13, description: 'Flag WAP Gateway' },
-    // Generate more data for demonstration
-    ...Array.from({ length: 719 }, (_, i) => ({
-      id: Math.floor(Math.random() * 100) + 14,
-      description: [
-        'Promotional Offer',
-        'Special Rate',
-        'Data Package',
-        'Voice Bundle',
-        'SMS Pack',
-        'Weekend Offer',
-        'Youth Package',
-        'Business Plan',
-        'International Roaming',
-        'Loyalty Reward'
-      ][Math.floor(Math.random() * 10)] + ` ${i + 14}`
-    }))
-  ]);
+ const [offerData, setOfferData] = useState([]);
+
 
   // State for offer table
-  const [offerState, setOfferState] = useState({
+ const [offerState, setOfferState] = useState({
     entries: 10,
     search: '',
     page: 1,
     filteredData: [],
     filters: { id: '', description: '' }
   });
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/help/offer');
+        const data = await res.json();
+        setOfferData(data);
+        setOfferState(prev => ({ ...prev, filteredData: data }));
+      } catch (err) {
+        console.error('❌ Erreur lors du fetch offers:', err);
+      }
+    };
+    fetchOffers();
+  }, []);
 
   // Apply filters function
   const applyFilters = (data, search, filters) => {
     let filtered = data;
-
-    // Global search
     if (search) {
       filtered = filtered.filter(item =>
         Object.values(item).some(value =>
@@ -52,8 +37,6 @@ const Offer = () => {
         )
       );
     }
-
-    // Column filters
     Object.keys(filters).forEach(key => {
       if (filters[key]) {
         filtered = filtered.filter(item =>
@@ -61,15 +44,15 @@ const Offer = () => {
         );
       }
     });
-
     return filtered;
   };
 
-  // Update filtered data when search or filters change
+  // Rafraîchir filteredData quand search ou filters changent
   useEffect(() => {
     const filtered = applyFilters(offerData, offerState.search, offerState.filters);
     setOfferState(prev => ({ ...prev, filteredData: filtered, page: 1 }));
-  }, [offerState.search, offerState.filters]);
+  }, [offerState.search, offerState.filters, offerData]);
+
 
   // Initialize filtered data
   useEffect(() => {
@@ -385,7 +368,7 @@ const Offer = () => {
 
   // Column definitions
   const offerColumns = [
-    { header: 'Offer', key: 'id' },
+    { header: 'Offer', key: 'offer' },
     { header: 'Description', key: 'description' }
   ];
 
