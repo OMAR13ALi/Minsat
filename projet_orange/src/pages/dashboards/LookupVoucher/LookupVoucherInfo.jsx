@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
 const LookupVoucherInfo = () => {
-  // Mock URL parameters for demonstration
+  // Extract URL parameters using vanilla JavaScript (since react-router-dom is not available)
   const urlParams = new URLSearchParams(window.location.search);
   const serialNumber = urlParams.get('serial');
   const activationCode = urlParams.get('activation');
- 
+  
   const lookupType = serialNumber ? 'Serial Number' : 'Activation Code';
   const lookupValue = serialNumber || activationCode;
   
@@ -13,67 +13,49 @@ const LookupVoucherInfo = () => {
   const [voucher, setVoucher] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
-  // Mock voucher data for demonstration
+
+  // Appel API quand lookupValue change
   useEffect(() => {
     if (!lookupValue) return;
-    
+
     const fetchVoucher = async () => {
       try {
         setLoading(true);
         setError('');
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock response with lots of data to test scrolling
-        const mockVoucher = {
-          id: lookupValue,
-          status: 'Active',
-          type: lookupType,
-          createdDate: '2024-01-15',
-          expiryDate: '2024-12-31',
-          value: '$50.00',
-          usedCount: '2/5',
-          lastUsed: '2024-03-20',
-          createdBy: 'System Admin',
-          category: 'Promotional',
-          discountType: 'Percentage',
-          discountValue: '25%',
-          minimumPurchase: '$100.00',
-          maximumDiscount: '$50.00',
-          usageLimit: '5',
-          currentUsage: '2',
-          remainingUses: '3',
-          validFrom: '2024-01-01',
-          validUntil: '2024-12-31',
-          applicableProducts: 'All Products',
-          customerSegment: 'Premium Members',
-          generatedAt: '2024-01-15 10:30:00',
-          lastModified: '2024-03-20 14:25:00'
-        };
-        
-        setVoucher(mockVoucher);
+        let url = '';
+
+        if (serialNumber) {
+          url = `http://localhost:5000/serialNumber/serialNumber/${serialNumber}`;
+        } else if (activationCode) {
+          url = `http://localhost:5000/activationCode/${activationCode}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Erreur serveur');
+
+        const data = await res.json();
+        setVoucher(data.voucher);
       } catch (err) {
         setError('Impossible de récupérer les informations du voucher.');
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchVoucher();
   }, [lookupValue, serialNumber, activationCode]);
 
   return (
     <div style={{ 
       width: '100%', 
-      height: 'auto', // Explicitly allow height to grow
+      height: 'auto',
       margin: 0, 
       padding: '2rem 1rem',
       background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
       display: 'flex',
       justifyContent: 'center',
-      overflowY: 'auto' // Explicitly allow vertical scrolling
+      overflowY: 'auto',
+      minHeight: '100vh'
     }}>
       <div style={{ 
         maxWidth: '900px', 
@@ -117,7 +99,7 @@ const LookupVoucherInfo = () => {
           borderRadius: '16px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
           border: '1px solid rgba(230, 130, 49, 0.1)',
-          overflow: 'auto' // Allow scrolling within the card if needed
+          overflow: 'auto'
         }}>
           {/* Card Header */}
           <div style={{
@@ -205,7 +187,7 @@ const LookupVoucherInfo = () => {
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite'
                   }}></div>
-                  <span>Loading voucher information...</span>
+                  <span>Chargement des informations du voucher...</span>
                 </div>
               )}
               
@@ -242,10 +224,10 @@ const LookupVoucherInfo = () => {
                   
                   <div style={{
                     borderRadius: '12px',
-                    overflow: 'auto', // Ensure table can scroll if needed
+                    overflow: 'auto',
                     boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
                     border: '1px solid rgba(230, 130, 49, 0.1)',
-                    maxHeight: '600px' // Optional: limit table height for internal scrolling
+                    maxHeight: '600px'
                   }}>
                     <table style={{
                       width: '100%',
@@ -292,7 +274,7 @@ const LookupVoucherInfo = () => {
                               padding: '1rem 1.5rem',
                               color: '#2c3e50',
                               borderBottom: '1px solid rgba(230, 130, 49, 0.1)'
-                            }}>{value}</td>
+                            }}>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -381,14 +363,14 @@ const LookupVoucherInfo = () => {
           margin: 0;
           padding: 0;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-          min-height: 100%; /* Allow body to grow */
-          overflow-y: auto; /* Explicitly enable vertical scrolling */
-          overflow-x: hidden; /* Prevent horizontal scrolling unless needed */
+          min-height: 100%;
+          overflow-y: auto;
+          overflow-x: hidden;
         }
         
         #root {
-          min-height: 100%; /* Ensure root container can grow */
-          overflow-y: auto; /* Allow scrolling */
+          min-height: 100%;
+          overflow-y: auto;
         }
         
         button:hover {
