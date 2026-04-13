@@ -2,9 +2,11 @@
 """
 Simple AIR server mock — speaks HTTP/1.0 over TCP on port 8080.
 Returns realistic XML-RPC responses for each UCIP/ACIP method.
+Field names and types match the UCIP v5 spec and real Ericsson AIR-IP 3.0.
 """
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import re
+import os
 
 # ── Read responses ────────────────────────────────────────────────────────────
 
@@ -12,37 +14,46 @@ GET_BALANCE_AND_DATE = """<?xml version="1.0"?>
 <methodResponse><params><param><value><struct>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-001</string></value></member>
-<member><name>currentBalance</name><value><string>250000</string></value></member>
-<member><name>currency</name><value><string>TND</string></value></member>
+<member><name>languageIDCurrent</name><value><i4>1</i4></value></member>
+<member><name>serviceClassCurrent</name><value><i4>104</i4></value></member>
+<member><name>accountValue1</name><value><i4>250000</i4></value></member>
+<member><name>currency1</name><value><string>TND</string></value></member>
 <member><name>creditClearanceDate</name><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member>
 <member><name>supervisionExpiryDate</name><value><dateTime.iso8601>20371231T120000+0000</dateTime.iso8601></value></member>
 <member><name>serviceRemovalDate</name><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member>
 <member><name>serviceFeeExpiryDate</name><value><dateTime.iso8601>20371231T120000+0000</dateTime.iso8601></value></member>
+<member><name>temporaryBlockedFlag</name><value><boolean>0</boolean></value></member>
 <member><name>dedicatedAccountInformation</name><value><array><data>
   <value><struct>
     <member><name>dedicatedAccountID</name><value><i4>1</i4></value></member>
-    <member><name>dedicatedAccountValue</name><value><string>70000000</string></value></member>
+    <member><name>dedicatedAccountValue1</name><value><i4>70000000</i4></value></member>
     <member><name>expiryDate</name><value><dateTime.iso8601>20250831T120000+0000</dateTime.iso8601></value></member>
   </struct></value>
   <value><struct>
     <member><name>dedicatedAccountID</name><value><i4>2</i4></value></member>
-    <member><name>dedicatedAccountValue</name><value><string>48023000</string></value></member>
+    <member><name>dedicatedAccountValue1</name><value><i4>48023000</i4></value></member>
     <member><name>expiryDate</name><value><dateTime.iso8601>20250731T120000+0000</dateTime.iso8601></value></member>
   </struct></value>
 </data></array></value></member>
+<member><name>negotiatedCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
+<member><name>availableServerCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
 </struct></value></param></params></methodResponse>"""
 
 GET_ACCOUNT_DETAILS = """<?xml version="1.0"?>
 <methodResponse><params><param><value><struct>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-002</string></value></member>
+<member><name>languageIDCurrent</name><value><i4>1</i4></value></member>
 <member><name>serviceClassCurrent</name><value><i4>104</i4></value></member>
+<member><name>serviceClassOriginal</name><value><i4>104</i4></value></member>
 <member><name>activationDate</name><value><dateTime.iso8601>20220427T120000+0000</dateTime.iso8601></value></member>
 <member><name>ussdEndOfCallNotificationID</name><value><i4>1</i4></value></member>
 <member><name>temporaryBlockedFlag</name><value><boolean>0</boolean></value></member>
+<member><name>accountGroupID</name><value><i4>0</i4></value></member>
 <member><name>supervisionExpiryDate</name><value><dateTime.iso8601>20371231T120000+0000</dateTime.iso8601></value></member>
 <member><name>creditClearanceDate</name><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member>
 <member><name>serviceRemovalDate</name><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member>
+<member><name>serviceFeeExpiryDate</name><value><dateTime.iso8601>20371231T120000+0000</dateTime.iso8601></value></member>
 <member><name>offerInformation</name><value><array><data>
   <value><struct>
     <member><name>offerID</name><value><i4>4990</i4></value></member>
@@ -50,38 +61,44 @@ GET_ACCOUNT_DETAILS = """<?xml version="1.0"?>
     <member><name>startDate</name><value><dateTime.iso8601>20230918T120000+0000</dateTime.iso8601></value></member>
   </struct></value>
 </data></array></value></member>
-<member><name>communityInformation</name><value><array><data>
+<member><name>communityInformationCurrent</name><value><array><data>
   <value><struct>
     <member><name>communityID</name><value><i4>4288</i4></value></member>
   </struct></value>
 </data></array></value></member>
+<member><name>negotiatedCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
+<member><name>availableServerCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
 </struct></value></param></params></methodResponse>"""
 
 GET_ACCUMULATORS = """<?xml version="1.0"?>
 <methodResponse><params><param><value><struct>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-003</string></value></member>
+<member><name>languageIDCurrent</name><value><i4>1</i4></value></member>
+<member><name>serviceClassCurrent</name><value><i4>104</i4></value></member>
 <member><name>accumulatorInformation</name><value><array><data>
   <value><struct>
     <member><name>accumulatorID</name><value><i4>11</i4></value></member>
-    <member><name>accumulatorValue</name><value><string>950</string></value></member>
+    <member><name>accumulatorValue</name><value><i4>950</i4></value></member>
     <member><name>accumulatorStartDate</name><value><dateTime.iso8601>20250701T120000+0000</dateTime.iso8601></value></member>
     <member><name>accumulatorResetDate</name><value><dateTime.iso8601>20250801T120000+0000</dateTime.iso8601></value></member>
   </struct></value>
   <value><struct>
     <member><name>accumulatorID</name><value><i4>20</i4></value></member>
-    <member><name>accumulatorValue</name><value><string>0</string></value></member>
+    <member><name>accumulatorValue</name><value><i4>0</i4></value></member>
     <member><name>accumulatorStartDate</name><value><dateTime.iso8601>20250701T120000+0000</dateTime.iso8601></value></member>
     <member><name>accumulatorResetDate</name><value><dateTime.iso8601>20250801T120000+0000</dateTime.iso8601></value></member>
   </struct></value>
 </data></array></value></member>
+<member><name>negotiatedCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
+<member><name>availableServerCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
 </struct></value></param></params></methodResponse>"""
 
 GET_FAF_LIST = """<?xml version="1.0"?>
 <methodResponse><params><param><value><struct>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-004</string></value></member>
-<member><name>friendAndFamilyList</name><value><array><data>
+<member><name>fafInformationList</name><value><array><data>
   <value><struct>
     <member><name>fafIndicator</name><value><i4>100</i4></value></member>
     <member><name>fafNumber</name><value><string>21650011210</string></value></member>
@@ -93,6 +110,8 @@ GET_FAF_LIST = """<?xml version="1.0"?>
     <member><name>owner</name><value><string>Subscriber</string></value></member>
   </struct></value>
 </data></array></value></member>
+<member><name>negotiatedCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
+<member><name>availableServerCapabilities</name><value><array><data><value><i4>0</i4></value></data></array></value></member>
 </struct></value></param></params></methodResponse>"""
 
 GET_ALLOWED_SERVICE_CLASSES = """<?xml version="1.0"?>
@@ -127,8 +146,8 @@ GET_PROMOTION_COUNTERS = """<?xml version="1.0"?>
 <methodResponse><params><param><value><struct>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-007</string></value></member>
-<member><name>promotionRefillAmount</name><value><string>0</string></value></member>
-<member><name>promotionRefillAmountRelative</name><value><string>0</string></value></member>
+<member><name>promotionRefillAmount</name><value><i4>0</i4></value></member>
+<member><name>promotionRefillAmountRelative</name><value><i4>0</i4></value></member>
 </struct></value></param></params></methodResponse>"""
 
 GET_PROMOTION_PLANS = """<?xml version="1.0"?>
@@ -136,6 +155,11 @@ GET_PROMOTION_PLANS = """<?xml version="1.0"?>
 <member><name>responseCode</name><value><int>0</int></value></member>
 <member><name>originTransactionID</name><value><string>mock-008</string></value></member>
 <member><name>promotionPlanInformation</name><value><array><data>
+  <value><struct>
+    <member><name>promotionPlanID</name><value><i4>1</i4></value></member>
+    <member><name>promotionStartDate</name><value><dateTime.iso8601>20250101T000000+0000</dateTime.iso8601></value></member>
+    <member><name>promotionEndDate</name><value><dateTime.iso8601>20251231T235959+0000</dateTime.iso8601></value></member>
+  </struct></value>
 </data></array></value></member>
 </struct></value></param></params></methodResponse>"""
 
@@ -164,7 +188,7 @@ RESPONSES = {
     "UpdateFaFList":                    SUCCESS,
     "UpdateCommunityList":              SUCCESS,
     "UpdateSubscriberSegmentation":     SUCCESS,
-    "UpdateUsageThresholdsAndCounters": SUCCESS,
+    "UpdateUsageThresholdsAndCounters": SUCCESS,  # not yet wired in ucip-wrapper
     "Refill":                           SUCCESS,
     "InstallSubscriber":                SUCCESS,
     "DeleteSubscriber":                 SUCCESS,
@@ -200,6 +224,7 @@ class AirMockHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", 8080), AirMockHandler)
-    print("[AIR-MOCK] Listening on :8080 — simulating Ericsson AIR server")
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(("0.0.0.0", port), AirMockHandler)
+    print(f"[AIR-MOCK] Listening on :{port} — simulating Ericsson AIR server")
     server.serve_forever()

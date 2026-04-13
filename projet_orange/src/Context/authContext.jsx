@@ -1,4 +1,31 @@
 import { createContext, useEffect, useState } from "react";
+import axios from "axios";
+
+// Attach JWT to every outgoing request
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// On 401, clear stored auth and redirect to login
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("currentUser");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const AuthContext = createContext();
 

@@ -9,13 +9,13 @@ const UserManagementAdmin = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [editService, setEditService] = useState('');
 
-  const services = ['DFI', 'IN', 'DSI'];
+  const services = ['DFI', 'DSC', 'IN', 'ADMIN'];
 
   // Fetch users from API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:5000/users/all', {
+        const response = await fetch('/users/all', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ const UserManagementAdmin = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:5000/users/validate", {
+      const response = await fetch("/users/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,7 +85,7 @@ const UserManagementAdmin = () => {
   // Block user via API
   const handleBlockUser = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/users/block/${userId}`, {
+      const response = await fetch(`/users/block/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ const UserManagementAdmin = () => {
   // Update user service via API
   const handleSaveService = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:5000/users/update/${userId}`, {
+      const response = await fetch(`/users/update/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

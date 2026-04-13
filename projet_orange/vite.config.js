@@ -8,5 +8,13 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
+  },
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+      '/users': 'http://localhost:5000',
+      '/serialnumber': 'http://localhost:5000',
+      '/activationcode': 'http://localhost:5000',
+    }
   }
 })

@@ -1,0 +1,39 @@
+# Build artifacts
+target/
+dist/
+build/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Runtime / logs
+backend-minsat-spring/audit-logs/
+*.log
+bash.exe.stackdump
+
+# Playwright test output
+.playwright-mcp/
+
+# Claude internal
+.claude/
+projet_orange/.claude/
+ucip-wrapper/.claude/
+
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Documents (large binaries)
+*.pdf
+*.docx
+
+# Misc
+*.stackdump
+search_audit.py

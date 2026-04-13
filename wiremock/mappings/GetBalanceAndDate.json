@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPattern": ".*",
+    "bodyPatterns": [{ "contains": "GetBalanceAndDate" }]
+  },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "text/xml" },
+    "body": "<?xml version=\"1.0\"?><methodResponse><params><param><value><struct><member><n>responseCode</n><value><i4>0</i4></value></member><member><n>responseMessage</n><value><string>OK</string></value></member><member><n>currentBalance</n><value><string>250</string></value></member><member><n>currency</n><value><string>TND</string></value></member><member><n>creditClearanceDate</n><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member><member><n>supervisionExpiryDate</n><value><dateTime.iso8601>20371231T120000+0000</dateTime.iso8601></value></member><member><n>serviceRemovalDate</n><value><dateTime.iso8601>20400925T120000+0000</dateTime.iso8601></value></member></struct></value></param></params></methodResponse>"
+  }
+}

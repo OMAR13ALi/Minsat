@@ -18,6 +18,8 @@ import Usage from './pages/dashboards/Help/Usage';
 import Trace4G from './pages/dashboards/GetMsisdnInformation/Trace4G';
 import UserManagement from './pages/dashboards/UserManagement/UserManagement';
 import Profile from './pages/Profile/Profile';
+import SystemLogs from './pages/dashboards/SystemLogs/SystemLogs';
+import Chatbot from './pages/dashboards/Chatbot/Chatbot';
 
 import { useContext, useState } from 'react';
 
@@ -44,29 +46,29 @@ const DashboardLayout = ({ children }) => {
   return (
     <div className="layout" style={{ display: 'flex', minHeight: '100vh' }}>
       <Sidebar onToggle={setSidebarCollapsed} />
-      <div style={{ 
-        marginLeft: sidebarCollapsed ? '80px' : '320px',
+      <div style={{
+        marginLeft: sidebarCollapsed ? '80px' : '240px',
         flex: 1,
         display: 'flex',
         flexDirection: 'column',
         transition: 'margin-left 0.3s ease'
       }}>
-        <div style={{ 
+        <div style={{
           position: 'fixed',
           top: 0,
-          left: sidebarCollapsed ? '80px' : '320px',
+          left: sidebarCollapsed ? '80px' : '240px',
           right: 0,
           zIndex: 999,
           transition: 'left 0.3s ease'
         }}>
           <Navbar />
         </div>
-        <main style={{ 
+        <main style={{
           flex: 1,
-          padding: '20px',
-          marginTop: '70px', // Height of navbar
-          backgroundColor: '#f7fafc',
-          minHeight: 'calc(100vh - 70px)'
+          padding: '24px',
+          marginTop: '64px',
+          backgroundColor: '#f5f6fa',
+          minHeight: 'calc(100vh - 64px)'
         }}>
           {children}
         </main>
@@ -232,17 +234,38 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <DashboardLayout>
                   <Profile />
                 </DashboardLayout>
               </ProtectedRoute>
-            } 
+            }
+          />
+          <Route
+            path="/admin/logs"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <SystemLogs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
           />
           
+          <Route
+            path="/chatbot"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Chatbot />
+                </DashboardLayout>
+              </ProtectedRoute>
+            }
+          />
+
           {/* Catch all route for 404 */}
           <Route path="*" element={<div>Page not found - 404</div>} />
         </Routes>

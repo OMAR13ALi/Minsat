@@ -123,7 +123,7 @@ public class SubscriberService {
         Map<String, Object> transformedBalance = formatBalance(balData, daDescriptions);
 
         // 5. Enrich FaF descriptions
-        List<Map<String, Object>> fafList = extractList(fafData, "friendAndFamilyList");
+        List<Map<String, Object>> fafList = extractList(fafData, "fafInformationList");
         fafList = enrichFaf(fafList);
 
         // 6. Enrich accumulator descriptions
@@ -211,8 +211,8 @@ public class SubscriberService {
     private Map<String, Object> formatBalance(Map<String, Object> balData,
                                               Map<Integer, String> daDescriptions) {
         Map<String, Object> b = new LinkedHashMap<>();
-        b.put("balance", formatMillimes(balData.get("currentBalance")));
-        b.put("currency", Objects.toString(balData.get("currency"), "TND"));
+        b.put("balance", formatMillimes(balData.get("accountValue1")));
+        b.put("currency", Objects.toString(balData.get("currency1"), "TND"));
         b.put("creditClearanceDate", formatAirDate(balData.get("creditClearanceDate")));
         b.put("supervisionExpiryDate", formatAirDate(balData.get("supervisionExpiryDate")));
         b.put("serviceRemovalDate", formatAirDate(balData.get("serviceRemovalDate")));
@@ -233,7 +233,7 @@ public class SubscriberService {
             if (entry instanceof Map<?, ?> em) {
                 Map<String, Object> da = new LinkedHashMap<>();
                 Object daId = em.get("dedicatedAccountID");
-                Object daVal = em.get("dedicatedAccountValue");
+                Object daVal = em.get("dedicatedAccountValue1");
                 Object exp   = em.get("expiryDate");
                 int id = daId instanceof Number n ? n.intValue() : 0;
                 da.put("id", id);
@@ -273,9 +273,9 @@ public class SubscriberService {
 
     private void enrichFafDescriptions(Map<String, Object> response) {
         Map<String, Object> data = dataOf(response);
-        List<Map<String, Object>> list = extractList(data, "friendAndFamilyList");
+        List<Map<String, Object>> list = extractList(data, "fafInformationList");
         // replace in-place — the response map contains data which we can update
-        data.put("friendAndFamilyList", enrichFaf(list));
+        data.put("fafInformationList", enrichFaf(list));
     }
 
     private void enrichAccumulatorDescriptions(Map<String, Object> response) {

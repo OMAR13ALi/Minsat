@@ -1,11 +1,13 @@
 package com.minsat.voucher;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
+@PreAuthorize("hasAnyRole('DFI','DSC','IN','ADMIN')")
 public class VoucherController {
 
     private final VoucherService voucherService;

@@ -33,9 +33,11 @@ public class GetFaFList {
 
         String txnId = UUID.randomUUID().toString();
         String owner = (requestedOwner != null && !requestedOwner.isBlank()) ? requestedOwner : "Subscriber";
+        // AIR spec §7.171: requestedOwner is <int> — 1=Subscriber, 2=Account, 3=Subscriber+Account
+        int ownerInt = ("Master".equalsIgnoreCase(owner) || "Account".equalsIgnoreCase(owner)) ? 2 : 1;
         String members = XmlHelper.mandatoryMembers(config, txnId)
                        + XmlHelper.member("subscriberNumber", subscriberNumber)
-                       + XmlHelper.member("requestedOwner", owner);
+                       + XmlHelper.memberInt("requestedOwner", ownerInt);
         String xml = XmlHelper.wrapMethodCall("GetFaFList", members);
         try {
             return xmlParser.parseResponse(airTransport.send(xml, "GetFaFList"), txnId);

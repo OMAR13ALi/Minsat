@@ -114,7 +114,8 @@ The Spring Boot wrapper communicates with Ericsson AIR over **raw TCP** (not HTT
 | Table | Engine | Purpose |
 |-------|--------|---------|
 | `users` | InnoDB | Primary auth — `class` ENUM(`DFI`,`DSC`,`IN`,`ADMIN`), `status`, `login_at` |
-| `audit` | InnoDB | Activity log — tracks MSISDN lookups, voucher lookups, history queries, logins |
+| `audit` | InnoDB | Legacy activity log — unused, kept for reference |
+| `system_logs` | InnoDB | Active activity log — all user actions (queries, updates, logins) |
 | `members` | InnoDB | Legacy user table (`username`, `password`, `nom`, `prenom`, `role`) |
 | `dagroups` | MyISAM | Dedicated Account group definitions (`DEFINITION_GROUP_ID`, `UnitType`, `Usage`, `category`) |
 | `faf` | MyISAM | Friend & Family indicator descriptions |
@@ -131,6 +132,7 @@ The Spring Boot wrapper communicates with Ericsson AIR over **raw TCP** (not HTT
 - `users` is the active auth table (JWT). `members` is legacy — kept for backwards compatibility.
 - Reference/lookup tables (`dagroups`, `faf`, `offer`, etc.) use MyISAM with no primary keys — treat as read-only.
 - `audit` auto-increments from ~1565; `serviceidentifier` from ~106; `users` from ~16.
+- `system_logs` columns: `id`, `timestamp`, `user_login`, `user_role`, `action_type`, `target_msisdn`, `details` (JSON), `ip_address`, `status` (SUCCESS/FAILURE), `air_response_code`. Indexed on timestamp, user_login, action_type, target_msisdn.
 
 ## Frontend Structure
 
@@ -140,6 +142,7 @@ Pages live in `src/pages/dashboards/`:
 - `MsisdnHistory/` — transaction history (calls Flask service)
 - `Help/` — reference data (SCDA codes, service IDs, offers, usage counters)
 - `UserManagement/` — admin user management
+- `SystemLogs/` — **admin-only** activity monitoring dashboard (route: `/admin/logs`)
 
 Auth context is in `src/context/authContext.jsx` (currently disabled in dev mode). The Nginx config in `projet_orange/nginx.conf` handles SPA routing with `try_files $uri /index.html`.
 
@@ -190,3 +193,39 @@ Added 4 action buttons with modal overlays (orange gradient theme, no external l
 - **+ Add FAF / ✕ Remove** — in FAF panel, manage FAF entries
 
 All modals show success (green banner + auto-close + data refresh) or error (red banner + stays open).
+
+## Session Changes (2026-03-29)
+
+### Auth disabled for development (`SecurityConfig.java`)
+`SecurityConfig.filterChain()` changed from `.anyRequest().authenticated()` to `.anyRequest().permitAll()`. All endpoints are now public. Re-enable by reverting that one line. The frontend `ProtectedRoute` in `App.jsx` also bypasses auth (returns `children` unconditionally). All JWT/auth code is intact and ready to re-enable.
+
+### System Logs — activity monitoring (`com/minsat/logs/`)
+New package with three classes:
+
+| Class | Purpose |
+|-------|---------|
+| `SystemLog.java` | Java record mapping a `system_logs` row |
+| `AuditService.java` | `@Async` fire-and-forget writes via `JdbcTemplate`. Helpers: `currentUser()`, `currentRole()`, `extractIp(request)`, `toJson(map)` |
+| `SystemLogController.java` | REST endpoints for the monitoring page |
+
+**REST endpoints:**
+- `GET /admin/logs` — paginated, filterable log feed. Params: `page`, `size`, `userLogin`, `actionType`, `msisdn`, `status`, `from`, `to` (datetime `yyyy-MM-dd HH:mm:ss`). Returns `{ logs, total, page, size }`.
+- `GET /admin/logs/stats` — today's counts: `totalToday`, `queriesToday`, `updatesToday`, `loginsToday`, `activeUsers`, `failuresToday`.
+- `GET /admin/logs/action-types` — distinct action types present in the table.
+
+**What gets logged automatically:**
+
+| Controller | Action types logged |
+|------------|-------------------|
+| `SubscriberController` | `MSISDN_QUERY`, `ACCOUNT_QUERY`, `BALANCE_QUERY`, `FAF_QUERY`, `ACCUMULATOR_QUERY`, `HLR_QUERY`, `PROMOTION_QUERY`, `SC_QUERY`, `REFILL_OPTIONS_QUERY` |
+| `UpdateController` | `UPDATE_BLOCK`, `UPDATE_SERVICE_CLASS`, `UPDATE_REFILL`, `UPDATE_FAF`, `UPDATE_BALANCE`, `UPDATE_ACCOUNT_DETAILS`, `UPDATE_COMMUNITY`, `UPDATE_SEGMENTATION`, `UPDATE_INSTALL`, `UPDATE_DELETE`, `UPDATE_LINK_SUBORDINATE`, `UPDATE_REFILL_BARRING`, `UPDATE_PROMOTION_COUNTERS`, `UPDATE_PROMOTION_PLAN`, `UPDATE_ACCUMULATORS` |
+| `AuthController` | `LOGIN_SUCCESS`, `LOGIN_FAILURE` |
+
+Each log entry captures: user login, role, action type, target MSISDN, JSON details (e.g. amount/currency for refills), client IP, SUCCESS/FAILURE status, and AIR response code. Logging is `@Async` — never blocks the request thread.
+
+### System Logs frontend page (`SystemLogs/SystemLogs.jsx`)
+Admin-only page at `/admin/logs` (visible in sidebar under **Admin** section). Features:
+- 6 stat cards (total today, queries, updates, logins, active users, failures) — auto-refresh every 30s
+- Filter bar: user, action type (grouped dropdown), MSISDN, status, date-range pickers
+- Paginated table (25 rows/page) with color-coded action badges and status badges
+- Sidebar nav item added using `FiActivity` icon from `react-icons/fi`

@@ -41,14 +41,16 @@ services:
     ports:
       - "8080:8080"
     environment:
-      AIR_HOST: 10.13.0.53
-      AIR_PORT: 10010
+      AIR_HOST: air-mock
+      AIR_PORT: 8080
       AIR_USER: kade
       AIR_PASSWORD: kade123
       AIR_NODE_TYPE: EXT
       AIR_HOST_NAME: minsat
       AIR_TIMEOUT_MS: 10000
       AIR_DEBUG: "true"
+    depends_on:
+      - air-mock
     restart: unless-stopped
 
   backend:
@@ -59,7 +61,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/minsat?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/minsat_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
       UCIP_BASE_URL: http://ucip-wrapper:8080
@@ -78,6 +80,17 @@ services:
     depends_on:
       - backend
       - ucip-wrapper
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - "8888:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    depends_on:
+      - mysql
 
 volumes:
   minsat-db:

@@ -25,9 +25,9 @@ const LookupVoucherInfo = () => {
         let url = '';
 
         if (serialNumber) {
-          url = `http://localhost:5000/serialNumber/serialNumber/${serialNumber}`;
+          url = `/serialnumber/${serialNumber}`;
         } else if (activationCode) {
-          url = `http://localhost:5000/activationCode/${activationCode}`;
+          url = `/activationcode/${activationCode}`;
         }
 
         const res = await fetch(url);

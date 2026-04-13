@@ -16,7 +16,7 @@ const Login = () => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-        "http://localhost:5000/users/login",
+        "/users/login",
         { email, password }
       );
     console.log("🔍 Utilisateur connecté:", data.user); // 👈 Ajoute ça

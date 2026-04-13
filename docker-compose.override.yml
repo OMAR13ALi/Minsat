@@ -1,0 +1,4 @@
+services:
+  backend:
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/minsat_test?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
