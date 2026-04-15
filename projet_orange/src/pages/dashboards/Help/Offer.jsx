@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Offer = () => {
   // Offer Data
@@ -16,8 +17,7 @@ const Offer = () => {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const res = await fetch('http://localhost:5000/help/offer');
-        const data = await res.json();
+        const { data } = await axios.get('/help/offer');
         setOfferData(data);
         setOfferState(prev => ({ ...prev, filteredData: data }));
       } catch (err) {

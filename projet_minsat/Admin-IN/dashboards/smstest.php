@@ -1,0 +1,47 @@
+<?php
+//error_reporting(0);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/sdp_noks.txt', 'r');
+$sdp_noks=fread($handle,1000);
+fclose($handle);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/air_noks.txt', 'r');
+$air_noks=fread($handle,1000);
+fclose($handle);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/occ_noks.txt', 'r');
+$occ_noks=fread($handle,1000);
+fclose($handle);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/ccn_noks.txt', 'r');
+$ccn_noks=fread($handle,1000);
+fclose($handle);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/ngvs_noks.txt', 'r');
+$ngvs_noks=fread($handle,1000);
+fclose($handle);
+
+$handle = fopen('../../OTN_HealthChecks/NOKs_Summary/ngcrs_noks.txt', 'r');
+$ngcrs_noks=fread($handle,1000);
+fclose($handle);
+
+
+
+
+$connect = mysqli_connect("10.13.64.58","minsat2","smaoui009","kannel_db");   
+
+ 
+ 
+ $query ="INSERT INTO send_sms ( momt, sender, receiver, msgdata, sms_type,time,coding,charset) VALUES
+ ( 'MT', 'HC_NOK_IN', '50011405', 'SDP_NOK : $sdp_noks AIR_NOK : $air_noks OCC_NOK : $occ_noks CCN_NOK : $ccn_noks NGVS_NOK : $ngvs_noks NGCRS_NOK : $ngcrs_noks', 2,UNIX_TIMESTAMP(),0,'latin1'); ";
+$result = mysqli_query($connect, $query);
+
+		
+		
+
+?>
+
+
+
+
+

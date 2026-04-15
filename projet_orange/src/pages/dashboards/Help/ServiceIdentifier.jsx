@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const ServiceIdentifier = () => {
   // Service Identifier Data
@@ -42,9 +43,8 @@ const [serviceIdentifierData, setServiceIdentifierData] = useState([]);
   useEffect(() => {
   const fetchData = async () => {
     try {
-      const res = await fetch("http://localhost:5000/help/si");
-      if (!res.ok) throw new Error("Erreur API ServiceIdentifiers");
-      const data = await res.json();
+      const { data } = await axios.get('/help/si');
+      setServiceIdentifierData(data);
       setServiceIdentifierState(prev => ({ ...prev, filteredData: data }));
     } catch (err) {
       console.error("❌ Erreur fetch ServiceIdentifiers:", err);

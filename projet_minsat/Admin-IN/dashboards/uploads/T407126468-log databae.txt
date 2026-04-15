@@ -1,0 +1,204 @@
+prtp=#                  
+prtp=# 
+prtp=# drop table adjustments_apr24_1;
+DROP TABLE
+prtp=# drop table adjustments_apr24_2;
+DROP TABLE
+prtp=# drop table adjustments_apr24_3;
+DROP TABLE
+prtp=# drop table adjustments_apr24_4;
+DROP TABLE
+prtp=# drop table adjustments_apr24_5;
+DROP TABLE
+prtp=# drop table adjustments_apr24_6;
+DROP TABLE
+prtp=# drop table adjustments_apr24_7;
+DROP TABLE
+prtp=# drop table adjustments_apr24_8;
+DROP TABLE
+prtp=# drop table adjustments_apr24_9;
+DROP TABLE
+prtp=# drop table adjustments_apr24_10;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_1;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_2;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_3;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_4;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_5;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_6;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_7;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_8;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_9;
+DROP TABLE
+prtp=# drop table c2s_transfers_apr24_10;
+DROP TABLE
+prtp=# 
+prtp=# 
+prtp=# 
+prtp=# drop table channel_transfers_apr24_1;
+DROP TABLE
+prtp=# drop table channel_transfers_apr24_2;
+DROP TABLE
+prtp=# drop table channel_transfers_apr24_3;
+DROP TABLE
+prtp=# drop table channel_transfers_apr24_4;
+DROP TABLE
+prtp=# 
+prtp=# 
+prtp=# 
+prtp=# drop table channel_transfers_it_apr24_1;
+ERROR:  table "channel_transfers_it_apr24_1" does not exist
+prtp=# drop table channel_transfers_it_apr24_2;
+ERROR:  table "channel_transfers_it_apr24_2" does not exist
+prtp=# drop table channel_transfers_it_apr24_3;
+ERROR:  table "channel_transfers_it_apr24_3" does not exist
+prtp=# drop table channel_transfers_it_apr24_4;
+ERROR:  table "channel_transfers_it_apr24_4" does not exist
+prtp=# drop table channel_users_history_jul23;
+DROP TABLE
+prtp=# drop table daily_c2s_lms_summary_jul23;
+DROP TABLE
+prtp=# drop table daily_c2s_trans_deta_jul_23_1;
+DROP TABLE
+prtp=# drop table daily_chnl_trans_det_jul_23_1;
+DROP TABLE
+prtp=# drop table daily_chnl_trans_mai_jul_23_1;
+DROP TABLE
+prtp=# drop table hourly_transaction_s_jul_23_1;
+DROP TABLE
+prtp=# drop table monthly_c2s_trans_de_ jun_23_1
+prtp-# drop table monthly_c2s_trans_de_ jul_23_1;
+ERROR:  syntax error at or near "jun_23_1"
+LINE 1: drop table monthly_c2s_trans_de_ jun_23_1
+                                         ^
+prtp=# drop table monthly_c2s_trans_de_ jun_23_1;
+ERROR:  syntax error at or near "jun_23_1"
+LINE 1: drop table monthly_c2s_trans_de_ jun_23_1;
+                                         ^
+prtp=# drop table monthly_c2s_trans_de_jun_23_1;
+DROP TABLE
+prtp=# 
+prtp=# 
+prtp=# drop table monthly_c2s_trans_de_ jul_23_1;
+ERROR:  syntax error at or near "jul_23_1"
+LINE 1: drop table monthly_c2s_trans_de_ jul_23_1;
+                                         ^
+prtp=# drop table monthly_c2s_trans_de_jul_23_1;
+DROP TABLE
+prtp=# drop table monthly_chnl_trans_d_jul_23_1;
+DROP TABLE
+prtp=# drop table monthly_chnl_trans_m_jul_23_1;
+DROP TABLE
+prtp=# drop table msisdn_usage_summary_jul23;
+DROP TABLE
+prtp=# drop table network_stock_trans__jun_23_1;
+ERROR:  table "network_stock_trans__jun_23_1" does not exist
+prtp=# drop table network_stock_trans_jun_23_1;
+ERROR:  table "network_stock_trans_jun_23_1" does not exist
+prtp=# drop table network_stock_trans__jun_23_1;
+ERROR:  table "network_stock_trans__jun_23_1" does not exist
+prtp=# 
+prtp=# 
+prtp=# drop table network_stock_transa_jul_23_1 ;
+DROP TABLE
+prtp=# drop table network_stock_transa_jul_23_1;
+ERROR:  table "network_stock_transa_jul_23_1" does not exist
+prtp=# 
+prtp=# 
+prtp=# 
+prtp=# drop table p2p_subscriber_summa_jul_23_1;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_2;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_3;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_4;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_5;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_6;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_7;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_8;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_9;
+DROP TABLE
+prtp=# drop table p2p_subscriber_summa_jul_23_10;
+DROP TABLE
+prtp=# drop table subscriber_control_jul23;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr_24_1;
+ERROR:  table "subscriber_transfers_apr_24_1" does not exist
+prtp=# drop table subscriber_transfers_apr_24_1;
+ERROR:  table "subscriber_transfers_apr_24_1" does not exist
+prtp=# drop table subscriber_transfers_apr_24_2;
+ERROR:  table "subscriber_transfers_apr_24_2" does not exist
+prtp=# drop table subscriber_transfers_apr24_1;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_2;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_3;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_4;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_5;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_6;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_7;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_8;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_9;
+DROP TABLE
+prtp=# drop table subscriber_transfers_apr24_10;
+DROP TABLE
+prtp=# 
+prtp=# 
+prtp=# drop table transfer_items_apr_24_1;
+ERROR:  table "transfer_items_apr_24_1" does not exist
+prtp=# 
+prtp=# drop table transfer_items_apr24_1;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_2;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_3;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_4;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_5;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_6;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_7;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_8;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_9;
+DROP TABLE
+prtp=# drop table transfer_items_apr24_10;
+DROP TABLE
+prtp=# drop table user_threshold_counter_may_2024;
+DROP TABLE
+prtp=# channel_transfers_items_apr24_1;
+ERROR:  syntax error at or near "channel_transfers_items_apr24_1"
+LINE 1: channel_transfers_items_apr24_1;
+        ^
+prtp=# drop table channel_transfers_items_apr24_1;
+DROP TABLE
+prtp=# drop table channel_transfers_items_apr24_2;
+DROP TABLE
+prtp=# drop table channel_transfers_items_apr24_3;
+DROP TABLE
+prtp=# drop table channel_transfers_items_apr24_4;
+DROP TABLE
+prtp=# 

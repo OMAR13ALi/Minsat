@@ -43,7 +43,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(request -> {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowedOriginPatterns(List.of("*"));
-                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
                 config.setAllowedHeaders(List.of("*"));
                 config.setAllowCredentials(false);
                 return config;
@@ -56,8 +56,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/users/forgetpassword").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/resetpassword").permitAll()
                 .requestMatchers(HttpMethod.GET, "/health").permitAll()
-                // Auth disabled during development — re-enable when auth service is ready
-                .anyRequest().permitAll()
+                // Admin-only endpoints
+                .requestMatchers(HttpMethod.GET, "/users/all").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/users/validate").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/users/block/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/users/update/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").hasRole("ADMIN")
+                // All other endpoints require authentication
+                .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {

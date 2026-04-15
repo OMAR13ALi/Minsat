@@ -1,8 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useSearchParams } from "react-router-dom";
 import { Shield, CreditCard, Settings, ChevronRight, ArrowRight } from 'lucide-react';
+import axios from 'axios';
+import { AuthContext } from '../../../Context/authContext';
 
 const MSISDNContent = () => {
+  const { currentUser } = useContext(AuthContext);
+  const role = currentUser?.class?.toUpperCase() || '';
+
+  // Permission map — what each role is allowed to do
+  const perms = {
+    refill:          ['DFI', 'IN', 'ADMIN'].includes(role),
+    block:           ['DSC', 'IN', 'ADMIN'].includes(role),
+    serviceClass:    ['IN', 'ADMIN'].includes(role),
+    adjustBalance:   ['IN', 'ADMIN'].includes(role),
+    faf:             ['IN', 'ADMIN'].includes(role),
+    community:       ['IN', 'ADMIN'].includes(role),
+    segmentation:    ['IN', 'ADMIN'].includes(role),
+    ussdNotif:       ['IN', 'ADMIN'].includes(role),
+    linkSubordinate: ['IN', 'ADMIN'].includes(role),
+    install:         ['IN', 'ADMIN'].includes(role),
+    delete:          ['IN', 'ADMIN'].includes(role),
+    accumulators:    ['IN', 'ADMIN'].includes(role),
+    refillBarring:   ['IN', 'ADMIN'].includes(role),
+    promotionMgmt:   ['IN', 'ADMIN'].includes(role),
+  };
+
   const [searchParams] = useSearchParams();
   const msisdnFromUrl = searchParams.get("msisdn");
   const [msisdn, setMsisdn] = useState(msisdnFromUrl || "");
@@ -24,7 +47,9 @@ const MSISDNContent = () => {
     usageThresholdsAndCounters: [],
     accumulators: [],
     promotionCounters: null,
-    promotionPlans: []
+    promotionPlans: [],
+    allowedServiceClasses: [],
+    refillOptions: []
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,9 +80,7 @@ const MSISDNContent = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/msisdn/${msisdn}`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      const data = await response.json();
+      const { data } = await axios.get(`/api/msisdn/${msisdn}`);
       setSearchResults({
         subscriberNumber: `216${msisdn}`,
         serviceClass: data.accountDetails?.serviceClassCurrent?.toString() || '',
@@ -85,6 +108,18 @@ const MSISDNContent = () => {
         usageThresholdsAndCounters: data.usageThresholdsAndCounters || [],
         accumulators: data.accumulators || [],
         promotionCounters: data.promotionCounters?.data || null,
+        allowedServiceClasses: (() => {
+          const sc = data.allowedServiceClasses;
+          if (!sc) return [];
+          const list = sc.data?.serviceClassList || sc.serviceClassList;
+          return Array.isArray(list) ? list : [];
+        })(),
+        refillOptions: (() => {
+          const ro = data.refillOptions;
+          if (!ro) return [];
+          const list = ro.data?.refillOptions || ro.refillOptions;
+          return Array.isArray(list) ? list : [];
+        })(),
         promotionPlans: (() => {
           const d = data.promotionPlans?.data;
           if (!d) return [];
@@ -109,7 +144,8 @@ const MSISDNContent = () => {
       subscriberNumber: '', serviceClass: '', activationDate: '', balance: '',
       serviceFee: '', status: '', barringStatus: '', supervisionFee: '', serviceRemoval: '',
       fafData: null, cugData: null, dedicatedAccounts: [], offers: [],
-      usageThresholdsAndCounters: [], accumulators: [], promotionCounters: null, promotionPlans: []
+      usageThresholdsAndCounters: [], accumulators: [], promotionCounters: null, promotionPlans: [],
+      allowedServiceClasses: [], refillOptions: []
     });
     setError(null);
   };
@@ -140,12 +176,7 @@ const MSISDNContent = () => {
     setUpdateLoading(true);
     setUpdateResult(null);
     try {
-      const response = await fetch(`/api/update/${type}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ msisdn, ...payload })
-      });
-      const data = await response.json();
+      const { data } = await axios.post(`/api/update/${type}`, { msisdn, ...payload });
       if (data.success !== false) {
         setUpdateResult({ success: true, message: 'Updated successfully' });
         setTimeout(() => { closeModal(); handleSearch(); }, 1500);
@@ -326,19 +357,21 @@ const MSISDNContent = () => {
               </div>
               {hasData && (
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => openModal('refill')}
-                    style={{
-                      padding: '8px 16px', border: '1.5px solid rgba(255,255,255,0.6)',
-                      background: 'transparent', color: 'white', borderRadius: '8px',
-                      fontWeight: 600, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s',
-                      fontFamily: "var(--sonic-font-ui, 'IBM Plex Sans', sans-serif)"
-                    }}
-                    onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.15)'}
-                    onMouseLeave={e => e.target.style.background = 'transparent'}
-                  >
-                    Refill Account
-                  </button>
+                  {perms.refill && (
+                    <button
+                      onClick={() => openModal('refill')}
+                      style={{
+                        padding: '8px 16px', border: '1.5px solid rgba(255,255,255,0.6)',
+                        background: 'transparent', color: 'white', borderRadius: '8px',
+                        fontWeight: 600, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s',
+                        fontFamily: "var(--sonic-font-ui, 'IBM Plex Sans', sans-serif)"
+                      }}
+                      onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.15)'}
+                      onMouseLeave={e => e.target.style.background = 'transparent'}
+                    >
+                      Refill Account
+                    </button>
+                  )}
                   <button
                     onClick={toggleFafCug}
                     style={{
@@ -353,19 +386,21 @@ const MSISDNContent = () => {
                   >
                     {showFafCug ? 'Hide FAF' : 'FAF & Community'} <ArrowRight size={13} />
                   </button>
-                  <button
-                    onClick={() => openModal('refill-barring')}
-                    style={{
-                      padding: '8px 16px', border: 'none',
-                      background: 'rgba(0,0,0,0.18)', color: 'white', borderRadius: '8px',
-                      fontWeight: 600, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s',
-                      fontFamily: "var(--sonic-font-ui, 'IBM Plex Sans', sans-serif)"
-                    }}
-                    onMouseEnter={e => e.target.style.background = 'rgba(0,0,0,0.28)'}
-                    onMouseLeave={e => e.target.style.background = 'rgba(0,0,0,0.18)'}
-                  >
-                    Refill Barring
-                  </button>
+                  {perms.refillBarring && (
+                    <button
+                      onClick={() => openModal('refill-barring')}
+                      style={{
+                        padding: '8px 16px', border: 'none',
+                        background: 'rgba(0,0,0,0.18)', color: 'white', borderRadius: '8px',
+                        fontWeight: 600, fontSize: '12px', cursor: 'pointer', transition: 'all 0.2s',
+                        fontFamily: "var(--sonic-font-ui, 'IBM Plex Sans', sans-serif)"
+                      }}
+                      onMouseEnter={e => e.target.style.background = 'rgba(0,0,0,0.28)'}
+                      onMouseLeave={e => e.target.style.background = 'rgba(0,0,0,0.18)'}
+                    >
+                      Refill Barring
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -387,7 +422,9 @@ const MSISDNContent = () => {
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#374151' }}>FAF Numbers</h4>
-                    <button className="action-btn" style={{ fontSize: '12px', padding: '5px 12px' }} onClick={() => openModal('faf-add')}>+ Add FAF</button>
+                    {perms.faf && (
+                      <button className="action-btn" style={{ fontSize: '12px', padding: '5px 12px' }} onClick={() => openModal('faf-add')}>+ Add FAF</button>
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
                     {searchResults.fafData.fafNumbers.map((faf, index) => (
@@ -396,8 +433,10 @@ const MSISDNContent = () => {
                           <strong style={{ fontFamily: "var(--sonic-font-mono, 'IBM Plex Mono', monospace)" }}>{faf.fafNumber}</strong>
                           {faf.description && <span style={{ color: '#667085', marginLeft: '8px', fontSize: '12px' }}>{faf.description}</span>}
                         </div>
-                        <button className="action-btn action-btn-danger" style={{ fontSize: '11px', padding: '3px 8px' }}
-                          onClick={() => openModal('faf-remove', { fafNumber: faf.fafNumber, fafIndicator: faf.fafIndicator })}>✕</button>
+                        {perms.faf && (
+                          <button className="action-btn action-btn-danger" style={{ fontSize: '11px', padding: '3px 8px' }}
+                            onClick={() => openModal('faf-remove', { fafNumber: faf.fafNumber, fafIndicator: faf.fafIndicator })}>✕</button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -410,7 +449,9 @@ const MSISDNContent = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#374151' }}>Community Group</h4>
-                    <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 8px' }} onClick={() => openModal('update-community-list')}>✏️ Edit</button>
+                    {perms.community && (
+                      <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 8px' }} onClick={() => openModal('update-community-list')}>✏️ Edit</button>
+                    )}
                   </div>
                   <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
                     ID: <strong style={{ color: '#1a1d23' }}>{searchResults.cugData.communityId || 'N/A'}</strong>
@@ -532,7 +573,7 @@ const MSISDNContent = () => {
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
                       <tr style={{ background: '#f9fafb' }}>
-                        {hasData && (
+                        {hasData && perms.accumulators && (
                           <th colSpan="5" style={{ padding: '8px 16px', textAlign: 'right', background: 'transparent', border: 'none', fontWeight: 'normal' }}>
                             <button className="action-btn action-btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => openModal('update-accumulators')}>📝 Update Accumulators</button>
                           </th>
@@ -648,7 +689,7 @@ const MSISDNContent = () => {
 
                 {activeTab === 'Promotion' && (
                   <div>
-                    {hasData && (
+                    {hasData && perms.promotionMgmt && (
                       <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
                         <button className="action-btn action-btn-secondary" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => openModal('update-promotion-counters')}>🔄 Update Counters</button>
                       </div>
@@ -680,10 +721,12 @@ const MSISDNContent = () => {
                               <td style={tdStyle}>{(plan.promotionStartDate || plan.startDate) ? formatDate(plan.promotionStartDate || plan.startDate) : 'N/A'}</td>
                               <td style={tdStyle}>{(plan.promotionEndDate || plan.endDate) ? formatDate(plan.promotionEndDate || plan.endDate) : 'N/A'}</td>
                               <td style={tdStyle}>
-                                <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '3px 8px' }}
-                                  onClick={() => openModal('update-promotion-plan', { planId: plan.promotionPlanID ?? plan.planId ?? plan.promotionPlanId, oldStartDate: plan.promotionStartDate || plan.startDate, oldEndDate: plan.promotionEndDate || plan.endDate })}>
-                                  📋 Update
-                                </button>
+                                {perms.promotionMgmt && (
+                                  <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '3px 8px' }}
+                                    onClick={() => openModal('update-promotion-plan', { planId: plan.promotionPlanID ?? plan.planId ?? plan.promotionPlanId, oldStartDate: plan.promotionStartDate || plan.startDate, oldEndDate: plan.promotionEndDate || plan.endDate })}>
+                                    📋 Update
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))}
@@ -748,12 +791,26 @@ const MSISDNContent = () => {
                     {isBlocked ? 'BLOCKED' : 'NO BARRING'}
                   </span>
                 </div>
-                <div style={{ marginTop: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 9px' }} onClick={() => openModal('update-account-details')}>USSD</button>
-                  <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 9px' }} onClick={() => openModal('subscriber-segmentation')}>Segment</button>
-                  <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 9px' }} onClick={() => openModal('link-subordinate')}>Link Sub</button>
-                  <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '4px 9px' }} onClick={() => openModal('install')}>Install</button>
-                  <button className="action-btn action-btn-danger" style={{ fontSize: '11px', padding: '4px 9px' }} onClick={() => openModal('delete')}>Delete</button>
+                <div style={{ marginTop: '14px' }}>
+                  {(perms.ussdNotif || perms.segmentation || perms.linkSubordinate) && (
+                    <>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#98a2b3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px', fontFamily: "var(--sonic-font-ui,'IBM Plex Sans',sans-serif)" }}>Account Settings</div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {perms.ussdNotif && <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '5px 10px' }} title="Update USSD End-of-Call Notification ID" onClick={() => openModal('update-account-details')}>USSD Notif</button>}
+                        {perms.segmentation && <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '5px 10px' }} title="Change subscriber account group for segmentation" onClick={() => openModal('subscriber-segmentation')}>Segmentation</button>}
+                        {perms.linkSubordinate && <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '5px 10px' }} title="Link this MSISDN as subordinate to a master account" onClick={() => openModal('link-subordinate')}>Link to Master</button>}
+                      </div>
+                    </>
+                  )}
+                  {(perms.install || perms.delete) && (
+                    <>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#98a2b3', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px', fontFamily: "var(--sonic-font-ui,'IBM Plex Sans',sans-serif)" }}>Lifecycle</div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {perms.install && <button className="action-btn action-btn-secondary" style={{ fontSize: '11px', padding: '5px 10px' }} title="Create a new subscriber account on AIR" onClick={() => openModal('install')}>Install on AIR</button>}
+                        {perms.delete && <button className="action-btn action-btn-danger" style={{ fontSize: '11px', padding: '5px 10px' }} title="Permanently delete subscriber from AIR" onClick={() => openModal('delete')}>Delete from AIR</button>}
+                      </div>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -795,9 +852,10 @@ const MSISDNContent = () => {
           <div style={{ background: '#1a1d26', borderRadius: '14px', padding: '20px' }}>
             <p style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: 600, color: '#ffffff', fontFamily: "var(--sonic-font-ui, 'IBM Plex Sans', sans-serif)", letterSpacing: '0.02em' }}>Quick Support</p>
             {[
-              { icon: <Shield size={18} />, label: isBlocked ? 'Unblock Line' : 'Block Line', action: () => openModal('block') },
-              { icon: <CreditCard size={18} />, label: 'Refill Account', action: () => openModal('refill') },
-              { icon: <Settings size={18} />, label: 'Change Service Class', action: () => openModal('service-class') }
+              ...(perms.block    ? [{ icon: <Shield size={18} />,   label: isBlocked ? 'Unblock Line' : 'Block Line', action: () => openModal('block') }] : []),
+              ...(perms.refill   ? [{ icon: <CreditCard size={18} />, label: 'Refill Account',       action: () => openModal('refill') }] : []),
+              ...(perms.serviceClass  ? [{ icon: <Settings size={18} />,  label: 'Change Service Class',  action: () => openModal('service-class') }] : []),
+              ...(perms.adjustBalance ? [{ icon: <CreditCard size={18} />, label: 'Adjust Balance',       action: () => openModal('update-balance') }] : [])
             ].map((item, i) => (
               <button
                 key={i}
@@ -806,7 +864,7 @@ const MSISDNContent = () => {
                   width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
                   padding: '12px 0',
                   background: 'none', border: 'none',
-                  borderBottom: i < 2 ? '1px solid rgba(255,255,255,0.07)' : 'none',
+                  borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.07)' : 'none',
                   cursor: 'pointer', textAlign: 'left',
                   transition: 'opacity 0.2s'
                 }}
@@ -975,6 +1033,7 @@ const MSISDNContent = () => {
               {modal.type === 'refill-barring' && 'Update Refill Barring'}
               {modal.type === 'update-promotion-counters' && 'Update Promotion Counters'}
               {modal.type === 'update-promotion-plan' && 'Update Promotion Plan'}
+              {modal.type === 'update-balance' && 'Adjust Balance'}
             </div>
             <div className="modal-body">
               {updateResult && (
@@ -994,20 +1053,40 @@ const MSISDNContent = () => {
               {modal.type === 'service-class' && (
                 <div>
                   <div className="modal-field">
-                    <label>New Service Class</label>
-                    <input type="number" placeholder="e.g. 104"
-                      value={modalInput.serviceClassNew || ''}
-                      onChange={e => setModalInput(p => ({ ...p, serviceClassNew: e.target.value }))} />
-                  </div>
-                  <div className="modal-field">
                     <label>Action</label>
                     <select value={modalInput.action || 'SetOriginal'}
                       onChange={e => setModalInput(p => ({ ...p, action: e.target.value }))}>
                       <option value="SetOriginal">SetOriginal — Set permanent service class</option>
                       <option value="SetTemporary">SetTemporary — Temporary override</option>
-                      <option value="DeleteTemporary">DeleteTemporary — Remove temporary override</option>
+                      <option value="DeleteTemporary">DeleteTemporary — Restore original class</option>
                     </select>
                   </div>
+                  {(modalInput.action || 'SetOriginal') !== 'DeleteTemporary' && (
+                    <div className="modal-field">
+                      <label>New Service Class {searchResults.allowedServiceClasses.length > 0 ? `(${searchResults.allowedServiceClasses.length} available)` : ''}</label>
+                      {searchResults.allowedServiceClasses.length > 0 ? (
+                        <select value={modalInput.serviceClassNew || ''}
+                          onChange={e => setModalInput(p => ({ ...p, serviceClassNew: e.target.value }))}>
+                          <option value="">-- Select service class --</option>
+                          {searchResults.allowedServiceClasses.map(sc => (
+                            <option key={sc} value={sc}>SC {sc}{sc === Number(searchResults.serviceClass) ? ' (current)' : ''}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input type="number" placeholder="e.g. 104"
+                          value={modalInput.serviceClassNew || ''}
+                          onChange={e => setModalInput(p => ({ ...p, serviceClassNew: e.target.value }))} />
+                      )}
+                    </div>
+                  )}
+                  {(modalInput.action || 'SetOriginal') === 'DeleteTemporary' && (
+                    <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#6b7280' }}>
+                      This will remove the temporary service class and restore the original one.
+                    </p>
+                  )}
+                  <p style={{ margin: '8px 0 0', fontSize: '12px', color: '#6b7280' }}>
+                    Current: <strong>SC {searchResults.serviceClass}</strong>
+                  </p>
                 </div>
               )}
 
@@ -1033,14 +1112,14 @@ const MSISDNContent = () => {
                   {(modalInput.refillType || 'voucher') === 'voucher' ? (
                     <div className="modal-field">
                       <label>Voucher Code</label>
-                      <input type="text" placeholder="Enter voucher code"
+                      <input type="text" placeholder="Enter voucher activation code"
                         value={modalInput.voucherCode || ''}
                         onChange={e => setModalInput(p => ({ ...p, voucherCode: e.target.value }))} />
                     </div>
                   ) : (
                     <div>
                       <div className="modal-field">
-                        <label>Amount (millimes)</label>
+                        <label>Amount (millimes — 1000 = 1 TND)</label>
                         <input type="number" placeholder="e.g. 5000"
                           value={modalInput.amount || ''}
                           onChange={e => setModalInput(p => ({ ...p, amount: e.target.value }))} />
@@ -1049,6 +1128,22 @@ const MSISDNContent = () => {
                         <label>Currency</label>
                         <input type="text" value={modalInput.currency || 'TND'}
                           onChange={e => setModalInput(p => ({ ...p, currency: e.target.value }))} />
+                      </div>
+                      <div className="modal-field">
+                        <label>Refill Profile ID {searchResults.refillOptions.length > 0 ? `(${searchResults.refillOptions.length} available)` : ''}</label>
+                        {searchResults.refillOptions.length > 0 ? (
+                          <select value={modalInput.profileId || ''}
+                            onChange={e => setModalInput(p => ({ ...p, profileId: e.target.value }))}>
+                            <option value="">-- Select profile --</option>
+                            {searchResults.refillOptions.map(id => (
+                              <option key={id} value={id}>Profile {id}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input type="number" placeholder="e.g. 9"
+                            value={modalInput.profileId || ''}
+                            onChange={e => setModalInput(p => ({ ...p, profileId: e.target.value }))} />
+                        )}
                       </div>
                     </div>
                   )}
@@ -1220,6 +1315,34 @@ const MSISDNContent = () => {
                 </div>
               )}
 
+              {modal.type === 'update-balance' && (
+                <div>
+                  <div style={{ background: '#f9fafb', borderRadius: '8px', padding: '10px 14px', marginBottom: '14px', fontSize: '13px', border: '1px solid #eaecf0' }}>
+                    Current balance: <strong style={{ fontFamily: "var(--sonic-font-mono,'IBM Plex Mono',monospace)" }}>{searchResults.balance || '—'}</strong>
+                  </div>
+                  <div className="modal-field">
+                    <label>Adjustment Mode</label>
+                    <select value={modalInput.balanceMode || 'relative'}
+                      onChange={e => setModalInput(p => ({ ...p, balanceMode: e.target.value }))}>
+                      <option value="relative">Relative — Add or subtract from current balance</option>
+                      <option value="absolute">Absolute — Set balance to exact value</option>
+                    </select>
+                  </div>
+                  <div className="modal-field">
+                    <label>{(modalInput.balanceMode || 'relative') === 'relative' ? 'Adjustment Amount (millimes, use − for debit)' : 'New Balance (millimes)'}</label>
+                    <input type="number" placeholder={(modalInput.balanceMode || 'relative') === 'relative' ? 'e.g. 5000 or -2000' : 'e.g. 50000'}
+                      value={modalInput.adjustmentAmount || ''}
+                      onChange={e => setModalInput(p => ({ ...p, adjustmentAmount: e.target.value }))} />
+                  </div>
+                  <div className="modal-field">
+                    <label>Currency</label>
+                    <input type="text" value={modalInput.currency || 'TND'}
+                      onChange={e => setModalInput(p => ({ ...p, currency: e.target.value }))} />
+                  </div>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#6b7280' }}>1000 millimes = 1 TND</p>
+                </div>
+              )}
+
               {modal.type === 'update-promotion-plan' && (
                 <div>
                   <div className="modal-field">
@@ -1274,7 +1397,7 @@ const MSISDNContent = () => {
                   } else if (modal.type === 'refill') {
                     const p = (modalInput.refillType || 'voucher') === 'voucher'
                       ? { voucherCode: modalInput.voucherCode }
-                      : { amount: parseInt(modalInput.amount), currency: modalInput.currency || 'TND' };
+                      : { amount: parseInt(modalInput.amount), currency: modalInput.currency || 'TND', profileId: modalInput.profileId || undefined };
                     handleUpdate('refill', p);
                   } else if (modal.type === 'faf-add') {
                     handleUpdate('faf', { action: 'ADD', entries: [{ fafNumber: modalInput.fafNumber, owner: modalInput.owner || 'Subscriber' }] });
@@ -1312,6 +1435,13 @@ const MSISDNContent = () => {
                     handleUpdate('promotion-counters', {
                       transactionCurrency: modalInput.transactionCurrency || 'TND',
                       promotionRefillAmountRelative: modalInput.promotionRefillAmountRelative || ''
+                    });
+                  } else if (modal.type === 'update-balance') {
+                    const isRelative = (modalInput.balanceMode || 'relative') === 'relative';
+                    handleUpdate('balance', {
+                      adjustmentAmount: modalInput.adjustmentAmount || '0',
+                      adjustmentAmountRelative: isRelative,
+                      currency: modalInput.currency || 'TND'
                     });
                   } else if (modal.type === 'update-promotion-plan') {
                     handleUpdate('promotion-plan', {

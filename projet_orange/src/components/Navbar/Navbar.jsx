@@ -213,7 +213,7 @@ const Navbar = () => {
   const userDropdownRef = useRef(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
+    const storedUser = sessionStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -231,12 +231,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     try {
-      if (typeof(Storage) !== "undefined") {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
-        sessionStorage.clear();
-      }
+      sessionStorage.clear();
       window.location.replace('/login');
     } catch (error) {
       window.location.href = '/login';

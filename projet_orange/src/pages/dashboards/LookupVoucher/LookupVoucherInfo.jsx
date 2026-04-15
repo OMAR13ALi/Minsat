@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const LookupVoucherInfo = () => {
   // Extract URL parameters using vanilla JavaScript (since react-router-dom is not available)
@@ -30,10 +31,7 @@ const LookupVoucherInfo = () => {
           url = `/activationcode/${activationCode}`;
         }
 
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('Erreur serveur');
-
-        const data = await res.json();
+        const { data } = await axios.get(url);
         setVoucher(data.voucher);
       } catch (err) {
         setError('Impossible de récupérer les informations du voucher.');

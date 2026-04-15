@@ -37,8 +37,7 @@ public class AuthService {
             throw new ConflictException("Un compte existe déjà avec cet email.");
         }
         String hashed = passwordEncoder.encode(req.password());
-        userRepository.insert(req.username(), req.email(), hashed,
-                req.userClass() != null ? req.userClass() : "DFI");
+        userRepository.insert(req.username(), req.email(), hashed, req.userClass());
 
         // Notify admin
         String adminEmail = vaultSecretService.getAdminEmail();

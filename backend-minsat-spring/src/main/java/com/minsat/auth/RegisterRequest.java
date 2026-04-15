@@ -1,5 +1,6 @@
 package com.minsat.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -11,6 +12,7 @@ public record RegisterRequest(
         @NotBlank @Size(min = 8, message = "Le mot de passe doit avoir au moins 8 caractères")
         @Pattern(regexp = ".*\\d.*", message = "Le mot de passe doit contenir au moins un chiffre")
         String password,
+        @JsonProperty("class")
         @Pattern(regexp = "DFI|DSC|IN|ADMIN", message = "Rôle invalide")
         String userClass
 ) {}

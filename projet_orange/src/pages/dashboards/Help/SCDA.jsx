@@ -17,8 +17,8 @@ const SCDA = () => {
     const fetchData = async () => {
       try {
         const [scRes, uaRes] = await Promise.all([
-          axios.get("http://localhost:5000/help/sc"),
-          axios.get("http://localhost:5000/help/ua")
+          axios.get("/help/sc"),
+          axios.get("/help/ua")
         ]);
         setServiceClassData(scRes.data);
         setDaGroupData(uaRes.data);

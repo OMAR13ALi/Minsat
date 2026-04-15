@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Check, Ban, Users, Filter } from 'lucide-react';
+import { Edit2, Check, Ban, Users, AlertCircle, X } from 'lucide-react';
+import axios from 'axios';
+
+const fontStyle = `
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+`;
+
+const serviceMeta = {
+  DFI:   { bg: '#e8f4fd', color: '#1a6fa8' },
+  IN:    { bg: '#ecfdf3', color: '#027a48' },
+  DSC:   { bg: '#f5f0ff', color: '#6a1b9a' },
+  ADMIN: { bg: '#fff3e0', color: '#e65100' },
+};
 
 const UserManagementAdmin = () => {
   const [showInactiveOnly, setShowInactiveOnly] = useState(false);
@@ -8,21 +28,15 @@ const UserManagementAdmin = () => {
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [editService, setEditService] = useState('');
+  const [hoveredRow, setHoveredRow] = useState(null);
+  const [hoveredBtn, setHoveredBtn] = useState(null);
 
   const services = ['DFI', 'DSC', 'IN', 'ADMIN'];
 
-  // Fetch users from API
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/users/all', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        const data = await response.json();
+        const { data } = await axios.get('/users/all');
         const mappedUsers = data.map(user => ({
           id: user.id,
           username: user.username,
@@ -38,108 +52,41 @@ const UserManagementAdmin = () => {
         setLoading(false);
       }
     };
-
     fetchUsers();
   }, []);
 
-  // Validate user via API
   const handleValidateUserApi = async (email, name, service) => {
     if (!email || !name || !service) {
-      console.error("Missing fields:", { email, name, service });
       setError("All fields are required for validation.");
       return;
     }
-
     try {
-      const response = await fetch("/users/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          correctClass: service,
-          email,
-          name
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("Validation successful:", result.message);
-
-      setUsers(prevUsers =>
-        prevUsers.map(user =>
-          user.email === email
-            ? { ...user, validated: true, service }
-            : user
-        )
+      const { data } = await axios.post("/users/validate", { correctClass: service, email, name });
+      console.log("Validation successful:", data.message);
+      setUsers(prev =>
+        prev.map(u => u.email === email ? { ...u, validated: true, service } : u)
       );
     } catch (err) {
-      console.error("Error validating user:", err);
-      setError(err.message || "Validation failed.");
+      setError(err.response?.data?.error || err.message || "Validation failed.");
     }
   };
 
-  // Block user via API
   const handleBlockUser = async (userId) => {
     try {
-      const response = await fetch(`/users/block/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 0 }), // Assuming status: 0 means blocked
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("User blocked successfully:", result.message);
-
-      setUsers(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId ? { ...user, validated: false } : user
-        )
-      );
+      await axios.patch(`/users/block/${userId}`);
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, validated: false } : u));
     } catch (err) {
-      console.error("Error blocking user:", err);
-      setError(err.message || "Failed to block user.");
+      setError(err.response?.data?.error || err.message || "Failed to block user.");
     }
   };
 
-  // Update user service via API
   const handleSaveService = async (userId) => {
     try {
-      const response = await fetch(`/users/update/${userId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ class: editService }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP Error: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("User service updated successfully:", result.message);
-
-      setUsers(prevUsers =>
-        prevUsers.map(user =>
-          user.id === userId ? { ...user, service: editService } : user
-        )
-      );
+      await axios.patch(`/users/update/${userId}`, { class: editService });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, service: editService } : u));
       setEditingUser(null);
     } catch (err) {
-      console.error("Error updating user service:", err);
-      setError(err.message || "Failed to update user service.");
+      setError(err.response?.data?.error || err.message || "Failed to update user service.");
     }
   };
 
@@ -154,412 +101,353 @@ const UserManagementAdmin = () => {
   };
 
   const filteredUsers = showInactiveOnly
-    ? users.filter(user => !user.validated)
+    ? users.filter(u => !u.validated)
     : users;
 
-  const styles = {
-    container: {
-      padding: '24px',
-      backgroundColor: '#f9fafb',
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif'
-    },
-    header: {
-      marginBottom: '24px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center'
-    },
-    title: {
-      fontSize: '36px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      margin: 0
-    },
-    inactiveButton: {
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '12px 20px',
-      borderRadius: '8px',
-      fontWeight: '500',
-      fontSize: '16px',
-      border: 'none',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
-      backgroundColor: showInactiveOnly ? '#ea580c' : '#f3f4f6',
-      color: showInactiveOnly ? 'white' : '#374151'
-    },
-    badge: {
-      marginLeft: '8px',
-      backgroundColor: '#c2410c',
-      color: 'white',
-      padding: '4px 10px',
-      borderRadius: '12px',
-      fontSize: '14px'
-    },
-    tableContainer: {
-      backgroundColor: 'white',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      marginBottom: '24px',
-      height: '700px', // Fixed height for scrolling
-      overflowY: 'auto'
-    },
-    tableHeader: {
-      backgroundColor: '#000000',
-      color: 'white',
-      padding: '20px 24px',
-      fontSize: '18px'
-    },
-    tableHeaderRow: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr',
-      gap: '16px',
-      alignItems: 'center',
-      fontWeight: '600',
-      fontSize: '18px'
-    },
-    tableBody: {
-      borderTop: '1px solid #e5e7eb'
-    },
-    tableRow: {
-      padding: '20px 24px',
-      borderBottom: '1px solid #e5e7eb',
-      transition: 'background-color 0.15s',
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr',
-      gap: '16px',
-      alignItems: 'center',
-      fontSize: '16px'
-    },
-    tableRowHover: {
-      backgroundColor: '#f9fafb'
-    },
-    username: {
-      fontWeight: '500',
-      color: '#1f2937',
-      fontSize: '17px'
-    },
-    email: {
-      color: '#6b7280',
-      fontSize: '16px'
-    },
-    serviceSelect: {
-      width: '100%',
-      padding: '8px 12px',
-      border: '1px solid #f97316',
-      borderRadius: '6px',
-      outline: 'none',
-      fontSize: '16px'
-    },
-    serviceBadge: {
-      display: 'inline-flex',
-      padding: '6px 16px',
-      borderRadius: '20px',
-      fontSize: '16px',
-      fontWeight: '500'
-    },
-    statusBadge: {
-      display: 'inline-flex',
-      padding: '6px 12px',
-      borderRadius: '20px',
-      fontSize: '14px',
-      fontWeight: '500'
-    },
-    activeStatus: {
-      backgroundColor: '#dcfce7',
-      color: '#166534'
-    },
-    inactiveStatus: {
-      backgroundColor: '#fee2e2',
-      color: '#dc2626'
-    },
-    dfiService: {
-      backgroundColor: '#dbeafe',
-      color: '#1e40af'
-    },
-    inService: {
-      backgroundColor: '#dcfce7',
-      color: '#166534'
-    },
-    dsiService: {
-      backgroundColor: '#e9d5ff',
-      color: '#7c3aed'
-    },
-    actionsContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '8px'
-    },
-    actionButton: {
-      padding: '10px',
-      borderRadius: '8px',
-      border: 'none',
-      cursor: 'pointer',
-      color: 'white',
-      transition: 'all 0.2s',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
-    },
-    editButton: {
-      backgroundColor: '#ea580c'
-    },
-    saveButton: {
-      backgroundColor: '#16a34a'
-    },
-    cancelButton: {
-      backgroundColor: '#6b7280'
-    },
-    validateButton: {
-      backgroundColor: '#16a34a'
-    },
-    blockButton: {
-      backgroundColor: '#dc2626'
-    },
-    statsContainer: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '24px',
-      marginTop: '24px'
-    },
-    statCard: {
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-      padding: '24px',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    statIcon: {
-      flexShrink: 0,
-      marginRight: '16px'
-    },
-    statLabel: {
-      fontSize: '16px',
-      fontWeight: '500',
-      color: '#6b7280',
-      margin: 0
-    },
-    statValue: {
-      fontSize: '28px',
-      fontWeight: 'bold',
-      color: '#1f2937',
-      margin: 0
-    },
-    emptyState: {
-      padding: '48px 24px',
-      textAlign: 'center'
-    },
-    emptyStateText: {
-      color: '#6b7280',
-      fontSize: '20px',
-      marginTop: '16px'
-    },
-    loading: {
-      textAlign: 'center',
-      padding: '24px',
-      color: '#6b7280'
-    },
-    error: {
-      textAlign: 'center',
-      padding: '24px',
-      color: '#dc2626',
-      fontWeight: '500'
-    }
+  const inactiveCount = users.filter(u => !u.validated).length;
+  const activeCount = users.filter(u => u.validated).length;
+
+  const getServiceStyle = (svc) =>
+    serviceMeta[svc] || { bg: '#f5f6fa', color: '#667085' };
+
+  const btnBase = {
+    width: '34px',
+    height: '34px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.15s ease',
+    flexShrink: 0,
+  };
+
+  const btnStates = {
+    edit:     { default: { bg: '#fff8f5', color: '#ff6600' }, hover: { bg: '#ff6600', color: '#fff' } },
+    save:     { default: { bg: '#ecfdf3', color: '#027a48' }, hover: { bg: '#027a48', color: '#fff' } },
+    cancel:   { default: { bg: '#f5f6fa', color: '#667085' }, hover: { bg: '#667085', color: '#fff' } },
+    validate: { default: { bg: '#ecfdf3', color: '#027a48' }, hover: { bg: '#027a48', color: '#fff' } },
+    block:    { default: { bg: '#fef3f2', color: '#b42318' }, hover: { bg: '#b42318', color: '#fff' } },
+  };
+
+  const getBtnStyle = (key, id) => {
+    const isHovered = hoveredBtn === `${key}-${id}`;
+    const s = isHovered ? btnStates[key].hover : btnStates[key].default;
+    return { ...btnBase, backgroundColor: s.bg, color: s.color };
   };
 
   return (
-    <div style={styles.container}>
-      {/* Header */}
-      <div style={styles.header}>
-        <h1 style={styles.title}>User Management</h1>
-        <button
-          style={styles.inactiveButton}
-          onClick={() => setShowInactiveOnly(!showInactiveOnly)}
-          onMouseOver={(e) => { e.target.style.backgroundColor = showInactiveOnly ? '#c2410c' : '#e5e7eb'; }}
-          onMouseOut={(e) => { e.target.style.backgroundColor = showInactiveOnly ? '#ea580c' : '#f3f4f6'; }}
-        >
-          <Users style={{ width: '20px', height: '20px', marginRight: '8px' }} />
-          Users Inactive
-          {showInactiveOnly && (
-            <span style={styles.badge}>
-              {users.filter(user => !user.validated).length}
+    <>
+      <style>{fontStyle}</style>
+      <div style={{ padding: '24px', backgroundColor: '#f5f6fa', minHeight: '100vh', fontFamily: "'IBM Plex Sans', sans-serif" }}>
+
+        {/* Error Banner */}
+        {error && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: '#fef3f2', border: '1px solid #fecdca', borderRadius: '10px',
+            padding: '12px 16px', marginBottom: '20px', animation: 'fadeIn 0.2s ease',
+            color: '#b42318', fontSize: '13px', fontWeight: '500',
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} />
+              {error}
             </span>
-          )}
-        </button>
-      </div>
-
-      {/* User Table */}
-      <div style={styles.tableContainer}>
-        {/* Table Header */}
-        <div style={styles.tableHeader}>
-          <div style={styles.tableHeaderRow}>
-            <div>Username</div>
-            <div>Email</div>
-            <div>Service</div>
-            <div>Status</div>
-            <div style={{ textAlign: 'center' }}>Actions</div>
+            <button
+              onClick={() => setError(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b42318', display: 'flex', padding: '2px' }}
+            >
+              <X size={15} />
+            </button>
           </div>
+        )}
+
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '4px', height: '22px', background: '#ff6600', borderRadius: '2px' }} />
+            <h1 style={{ fontSize: '19px', fontWeight: '700', color: '#101828', margin: 0, fontFamily: "'IBM Plex Sans', sans-serif" }}>
+              User Management
+            </h1>
+            <span style={{
+              background: '#f5f6fa', color: '#667085', fontSize: '11px',
+              fontWeight: '600', padding: '3px 10px', borderRadius: '20px',
+              border: '1px solid #eaecf0', letterSpacing: '0.04em',
+            }}>
+              {users.length} total
+            </span>
+          </div>
+
+          <button
+            onClick={() => setShowInactiveOnly(!showInactiveOnly)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '7px',
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
+              fontWeight: '600', border: '1px solid',
+              cursor: 'pointer', transition: 'all 0.15s ease',
+              fontFamily: "'IBM Plex Sans', sans-serif",
+              backgroundColor: showInactiveOnly ? '#ff6600' : '#fff',
+              color: showInactiveOnly ? '#fff' : '#667085',
+              borderColor: showInactiveOnly ? '#ff6600' : '#eaecf0',
+            }}
+          >
+            <Users size={15} />
+            Inactive Users
+            {inactiveCount > 0 && (
+              <span style={{
+                background: showInactiveOnly ? 'rgba(255,255,255,0.25)' : '#fef3f2',
+                color: showInactiveOnly ? '#fff' : '#b42318',
+                fontSize: '10px', fontWeight: '700',
+                padding: '2px 7px', borderRadius: '12px', letterSpacing: '0.04em',
+              }}>
+                {inactiveCount}
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Table Body */}
-        <div style={styles.tableBody}>
-          {loading ? (
-            <div style={styles.loading}>Loading...</div>
-          ) : error ? (
-            <div style={styles.error}>{error}</div>
-          ) : filteredUsers.length === 0 ? (
-            <div style={styles.emptyState}>
-              <Filter style={{ width: '48px', height: '48px', color: '#9ca3af', margin: '0 auto' }} />
-              <p style={styles.emptyStateText}>
-                {showInactiveOnly ? 'No inactive users found' : 'No users found'}
-              </p>
-            </div>
-          ) : (
-            filteredUsers.map((user) => (
-              <div
-                key={user.id}
-                style={styles.tableRow}
-                onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
-                onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'white'; }}
-              >
-                <div style={styles.username}>{user.username}</div>
-                <div style={styles.email}>{user.email}</div>
-                <div>
-                  {editingUser === user.id ? (
-                    <select
-                      value={editService}
-                      onChange={(e) => setEditService(e.target.value)}
-                      style={styles.serviceSelect}
-                    >
-                      {services.map(service => (
-                        <option key={service} value={service}>{service}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span
-                      style={{ 
-                        ...styles.serviceBadge,
-                        ...(user.service === 'DFI' ? styles.dfiService :
-                          user.service === 'IN' ? styles.inService :
-                          styles.dsiService)
-                      }}
-                    >
-                      {user.service}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <span
-                    style={{
-                      ...styles.statusBadge,
-                      ...(user.validated ? styles.activeStatus : styles.inactiveStatus)
-                    }}
-                  >
-                    {user.validated ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <div style={styles.actionsContainer}>
-                  {editingUser === user.id ? (
-                    <>
-                      <button
-                        onClick={() => handleSaveService(user.id)}
-                        style={{ ...styles.actionButton, ...styles.saveButton }}
-                        onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
-                        onMouseOut={(e) => e.target.style.backgroundColor = '#16a34a'}
-                        title="Save changes"
-                      >
-                        <Check style={{ width: '18px', height: '18px' }} />
-                      </button>
-                      <button
-                        onClick={handleCancelEdit}
-                        style={{ ...styles.actionButton, ...styles.cancelButton }}
-                        onMouseOver={(e) => e.target.style.backgroundColor = '#4b5563'}
-                        onMouseOut={(e) => e.target.style.backgroundColor = '#6b7280'}
-                        title="Cancel"
-                      >
-                        <Ban style={{ width: '18px', height: '18px' }} />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleEditService(user)}
-                        style={{ ...styles.actionButton, ...styles.editButton }}
-                        onMouseOver={(e) => e.target.style.backgroundColor = '#c2410c'}
-                        onMouseOut={(e) => e.target.style.backgroundColor = '#ea580c'}
-                        title="Edit service"
-                      >
-                        <Edit2 style={{ width: '18px', height: '18px' }} />
-                      </button>
-                      {user.validated ? (
-                        <button
-                          onClick={() => handleBlockUser(user.id)}
-                          style={{ ...styles.actionButton, ...styles.blockButton }}
-                          onMouseOver={(e) => e.target.style.backgroundColor = '#b91c1c'}
-                          onMouseOut={(e) => e.target.style.backgroundColor = '#dc2626'}
-                          title="Block user"
-                        >
-                          <Ban style={{ width: '18px', height: '18px' }} />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleValidateUserApi(user.email, user.username, user.service)}                        
-                          style={{ ...styles.actionButton, ...styles.validateButton }}
-                          onMouseOver={(e) => e.target.style.backgroundColor = '#15803d'}
-                          onMouseOut={(e) => e.target.style.backgroundColor = '#16a34a'}
-                          title="Validate user"
-                        >
-                          <Check style={{ width: '16px', height: '16px' }} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+        {/* Table Card */}
+        <div style={{
+          backgroundColor: '#fff',
+          borderRadius: '14px',
+          border: '1px solid #eaecf0',
+          boxShadow: '0 1px 4px rgba(16,24,40,0.06)',
+          overflow: 'hidden',
+          marginBottom: '20px',
+        }}>
+          {/* Column Headers */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1.2fr 1.8fr 1fr 0.9fr 0.8fr',
+            gap: '12px',
+            padding: '10px 20px',
+            background: '#f9fafb',
+            borderBottom: '1px solid #eaecf0',
+          }}>
+            {['Username', 'Email', 'Service', 'Status', 'Actions'].map((h, i) => (
+              <div key={h} style={{
+                fontSize: '10px', fontWeight: '700', color: '#667085',
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                textAlign: i === 4 ? 'center' : 'left',
+              }}>
+                {h}
               </div>
-            ))
-          )}
-        </div>
-      </div>
+            ))}
+          </div>
 
-      {/* Summary Stats */}
-      <div style={styles.statsContainer}>
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>
-            <Users style={{ width: '32px', height: '32px', color: '#ea580c' }} />
-          </div>
+          {/* Body */}
           <div>
-            <p style={styles.statLabel}>Total Users</p>
-            <p style={styles.statValue}>{users.length}</p>
+            {loading ? (
+              <div style={{ padding: '48px', textAlign: 'center' }}>
+                <div style={{
+                  width: '28px', height: '28px',
+                  border: '3px solid #eaecf0',
+                  borderTopColor: '#ff6600',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  margin: '0 auto 12px',
+                }} />
+                <p style={{ color: '#667085', fontSize: '13px', margin: 0, fontWeight: '500' }}>Loading users…</p>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div style={{ padding: '56px 24px', textAlign: 'center' }}>
+                <Users size={40} style={{ color: '#d1d5db', margin: '0 auto 12px' }} />
+                <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0, fontWeight: '500' }}>
+                  {showInactiveOnly ? 'No inactive users found' : 'No users found'}
+                </p>
+              </div>
+            ) : (
+              filteredUsers.map((user, idx) => (
+                <div
+                  key={user.id}
+                  onMouseEnter={() => setHoveredRow(user.id)}
+                  onMouseLeave={() => setHoveredRow(null)}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1.2fr 1.8fr 1fr 0.9fr 0.8fr',
+                    gap: '12px',
+                    padding: '13px 20px',
+                    borderBottom: idx < filteredUsers.length - 1 ? '1px solid #f3f4f6' : 'none',
+                    backgroundColor: hoveredRow === user.id ? '#fafafa' : '#fff',
+                    alignItems: 'center',
+                    transition: 'background-color 0.12s ease',
+                  }}
+                >
+                  {/* Username */}
+                  <div style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '13px', fontWeight: '600', color: '#101828',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {user.username}
+                  </div>
+
+                  {/* Email */}
+                  <div style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '12px', color: '#667085',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {user.email}
+                  </div>
+
+                  {/* Service */}
+                  <div>
+                    {editingUser === user.id ? (
+                      <select
+                        value={editService}
+                        onChange={(e) => setEditService(e.target.value)}
+                        style={{
+                          width: '100%', padding: '6px 10px',
+                          background: '#fafafa', border: '1.5px solid #ff6600',
+                          borderRadius: '8px', outline: 'none',
+                          fontSize: '12px', fontFamily: "'IBM Plex Sans', sans-serif",
+                          fontWeight: '600', color: '#101828',
+                          boxShadow: '0 0 0 3px rgba(255,102,0,0.08)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {services.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span style={{
+                        display: 'inline-flex',
+                        padding: '3px 10px',
+                        borderRadius: '20px',
+                        fontSize: '10px', fontWeight: '700',
+                        textTransform: 'uppercase', letterSpacing: '0.06em',
+                        backgroundColor: getServiceStyle(user.service).bg,
+                        color: getServiceStyle(user.service).color,
+                      }}>
+                        {user.service || '—'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <span style={{
+                      display: 'inline-flex',
+                      padding: '3px 10px',
+                      borderRadius: '20px',
+                      fontSize: '10px', fontWeight: '700',
+                      textTransform: 'uppercase', letterSpacing: '0.06em',
+                      backgroundColor: user.validated ? '#ecfdf3' : '#fef3f2',
+                      color: user.validated ? '#027a48' : '#b42318',
+                    }}>
+                      {user.validated ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    {editingUser === user.id ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveService(user.id)}
+                          onMouseEnter={() => setHoveredBtn(`save-${user.id}`)}
+                          onMouseLeave={() => setHoveredBtn(null)}
+                          style={getBtnStyle('save', user.id)}
+                          title="Save changes"
+                        >
+                          <Check size={15} />
+                        </button>
+                        <button
+                          onClick={handleCancelEdit}
+                          onMouseEnter={() => setHoveredBtn(`cancel-${user.id}`)}
+                          onMouseLeave={() => setHoveredBtn(null)}
+                          style={getBtnStyle('cancel', user.id)}
+                          title="Cancel"
+                        >
+                          <X size={15} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEditService(user)}
+                          onMouseEnter={() => setHoveredBtn(`edit-${user.id}`)}
+                          onMouseLeave={() => setHoveredBtn(null)}
+                          style={getBtnStyle('edit', user.id)}
+                          title="Edit service"
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        {user.validated ? (
+                          <button
+                            onClick={() => handleBlockUser(user.id)}
+                            onMouseEnter={() => setHoveredBtn(`block-${user.id}`)}
+                            onMouseLeave={() => setHoveredBtn(null)}
+                            style={getBtnStyle('block', user.id)}
+                            title="Block user"
+                          >
+                            <Ban size={14} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleValidateUserApi(user.email, user.username, user.service)}
+                            onMouseEnter={() => setHoveredBtn(`validate-${user.id}`)}
+                            onMouseLeave={() => setHoveredBtn(null)}
+                            style={getBtnStyle('validate', user.id)}
+                            title="Validate user"
+                          >
+                            <Check size={14} />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>
-            <Check style={{ width: '32px', height: '32px', color: '#16a34a' }} />
-          </div>
-          <div>
-            <p style={styles.statLabel}>Active Users</p>
-            <p style={styles.statValue}>
-              {users.filter(user => user.validated).length}
-            </p>
-          </div>
-        </div>
-        <div style={styles.statCard}>
-          <div style={styles.statIcon}>
-            <Ban style={{ width: '32px', height: '32px', color: '#dc2626' }} />
-          </div>
-          <div>
-            <p style={styles.statLabel}>Inactive Users</p>
-            <p style={styles.statValue}>
-              {users.filter(user => !user.validated).length}
-            </p>
-          </div>
+
+        {/* Stat Cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+          {[
+            { label: 'Total Users',    value: users.length,   iconBg: '#fff3e0', iconColor: '#e65100', Icon: Users },
+            { label: 'Active Users',   value: activeCount,    iconBg: '#ecfdf3', iconColor: '#027a48', Icon: Check },
+            { label: 'Inactive Users', value: inactiveCount,  iconBg: '#fef3f2', iconColor: '#b42318', Icon: Ban   },
+          ].map(({ label, value, iconBg, iconColor, Icon }) => (
+            <div key={label} style={{
+              backgroundColor: '#fff',
+              borderRadius: '12px',
+              border: '1px solid #eaecf0',
+              boxShadow: '0 1px 3px rgba(16,24,40,0.05)',
+              padding: '18px 20px',
+              display: 'flex', alignItems: 'center', gap: '14px',
+            }}>
+              <div style={{
+                width: '38px', height: '38px', borderRadius: '10px',
+                backgroundColor: iconBg, color: iconColor,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Icon size={18} />
+              </div>
+              <div>
+                <p style={{
+                  fontSize: '10px', fontWeight: '700', color: '#9ca3af',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 3px',
+                }}>
+                  {label}
+                </p>
+                <p style={{
+                  fontSize: '24px', fontWeight: '700', color: '#101828',
+                  margin: 0, fontFamily: "'IBM Plex Sans', sans-serif", lineHeight: 1,
+                }}>
+                  {value}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

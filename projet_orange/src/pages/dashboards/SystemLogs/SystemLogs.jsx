@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { Download } from 'lucide-react';
-
-const API = 'http://localhost:5000';
+import axios from 'axios';
 
 // ── Color maps ────────────────────────────────────────────────────────────────
 
@@ -130,8 +129,8 @@ export default function SystemLogs() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/admin/logs/stats`);
-      if (res.ok) setStats(await res.json());
+      const { data } = await axios.get('/admin/logs/stats');
+      setStats(data);
     } catch { /* silent */ }
   }, []);
 
@@ -147,9 +146,7 @@ export default function SystemLogs() {
       if (currentFilters.from)       params.set('from',       currentFilters.from.replace('T', ' ') + ':00');
       if (currentFilters.to)         params.set('to',         currentFilters.to.replace('T', ' ')   + ':00');
 
-      const res = await fetch(`${API}/admin/logs?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const { data } = await axios.get(`/admin/logs?${params}`);
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch (e) {
@@ -195,9 +192,7 @@ export default function SystemLogs() {
       if (filters.from)       params.set('from',       filters.from.replace('T', ' ') + ':00');
       if (filters.to)         params.set('to',         filters.to.replace('T', ' ')   + ':00');
 
-      const res = await fetch(`${API}/admin/logs/export?${params}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const { data } = await axios.get(`/admin/logs/export?${params}`);
 
       const rows = data.map(l => ({
         'Timestamp':  l.timestamp ? l.timestamp.replace('T', ' ').substring(0, 19) : '',

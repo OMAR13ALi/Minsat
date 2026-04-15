@@ -1,0 +1,262 @@
+Time: 20250326 12:06:53.424000
+Module: PSC-TrafficHandler/8.1/A/1
+Event: Tree execution trace
+ID: 9900006
+Type: 2269699863190011905
+Count: 8960885
+Aff.Obj: [1]56009243[/1]
+Info: Provider: Rating RatingPlan: 6
+SDP local time: 2025-03-26 12:06:53 +01:00
+Start time: 2025-03-26 12:06:53 +01:00
+
+Print out of data set:
+  Account group id: 0
+  Service offerings: 0
+  FaF indicator: 0
+  Service class: 650
+  Subscription type: -1
+  Community ID: 0
+  Activation date: 2024-1-9
+  Active service: true
+  Passive service: true
+  Account in Euro: false
+  Euro conversion factor: 1.0
+  Main account: [24]17.000000[/24]
+  Main account empty level: [24]0.000000[/24]
+  Individual Price Factor: 100.0% (default value)
+  Dedicated Accounts: 
+   ID   Balance             Start date     Expiry date     Empty level  Composite  DA type  DA owner  PAM relative dates  
+   ---  ------------------  -------------  --------------  -----------  ---------  -------  --------  ------------------  
+    10   [24]0.000000[/24]  No start date  No expiry date           No         No    Money  Consumer                  No  
+   410  [24]576716800[/24]  No start date      2024-05-07           No         No   Volume  Consumer                  No
+  Accumulators:
+   ID  Counter     Clearing date  
+   --  ----------  -------------  
+   10  [24]0[/24]     2025-03-26  
+   11  [24]0[/24]     2025-02-01  
+   20  [24]0[/24]     2025-03-26
+  Usage counters:
+   ID   Value                   Nominal value  Counter type  Value type          Owner     
+   ---  ----------------------  -------------  ------------  ------------------  --------  
+   200  [24]2199023225405[/24]                     Personal  Non-monetary units  Consumer
+  Usage thresholds:
+   ID      UC ID  Source   Value                        Max Limit  
+   ------  -----  -------  ---------------------------  ---------  
+   150150    150  Default           [24]30.000000[/24]      false  
+     5001    500  Default          [24]1073741824[/24]      false  
+   150160    150  Default           [24]32.000000[/24]      false  
+     5011    501  Default         [24]10737418240[/24]      false  
+    15510   1551  Default                   [24]5[/24]      false  
+   150170    150  Default           [24]34.000000[/24]      false  
+      411    411  Default          [24]5368709120[/24]      false  
+     5021    502  Default                   [24]3[/24]      false  
+    15520   1552  Default                   [24]5[/24]      false  
+    15010    150  Default            [24]2.000000[/24]      false  
+   150180    150  Default           [24]36.000000[/24]      false  
+    15015    150  Default            [24]3.000000[/24]      false  
+    15530   1553  Default                   [24]5[/24]      false  
+    15020    150  Default            [24]4.000000[/24]      false  
+   150190    150  Default           [24]38.000000[/24]      false  
+    15030    150  Default            [24]6.000000[/24]      false  
+     3000    300  Default                [24]1800[/24]      false  
+   150200    150  Default           [24]40.000000[/24]      false  
+    15040    150  Default            [24]8.000000[/24]      false  
+    40001  40000  Default       [24]1099511627776[/24]      false  
+    40003  40002  Default             [24]1048576[/24]      false  
+    15050    150  Default           [24]10.000000[/24]      false  
+    40011  40010  Default  [24]999999999999999999[/24]      false  
+     1100    100  Default           [24]12.711864[/24]      false  
+     1101    100  Default           [24]16.949152[/24]      false  
+     1102    100  Default           [24]42.372881[/24]      false  
+     1103    100  Default           [24]84.745762[/24]      false  
+     1104    100  Default          [24]211.864406[/24]      false  
+     1105    100  Default          [24]423.718813[/24]      false  
+     2001    200  Default          [24]5368709120[/24]      false  
+     1106    100  Default          [24]847.457627[/24]      false  
+     2002    200  Default         [24]10737418240[/24]      false  
+     1107    100  Default         [24]1694.915254[/24]      false  
+     2003    200  Default          [24]2147483648[/24]      false  
+     1108    100  Default         [24]4237.288135[/24]      false  
+     2004    200  Default          [24]1073741824[/24]      false  
+    15060    150  Default           [24]12.000000[/24]      false  
+     1109    100  Default         [24]8474.576271[/24]      false  
+     2005    200  Default         [24]16106127360[/24]      false  
+     1110    100  Default        [24]16949.152542[/24]      false  
+     2006    200  Default         [24]53687091200[/24]      false  
+   150100    150  Default           [24]20.000000[/24]      false  
+     1111    100  Default        [24]25423.728813[/24]      false  
+     2007    200  Default         [24]32212254720[/24]      false  
+     1112    100  Default        [24]33898.305084[/24]      false  
+     2008    201  Default          [24]1073741824[/24]      false  
+     1113    100  Default        [24]42372.881355[/24]      false  
+     2009    200  Default       [24]2199023255552[/24]      false  
+     1500    150  Default            [24]5.000000[/24]      false  
+   150110    150  Default           [24]22.000000[/24]      false  
+    15070    150  Default           [24]14.000000[/24]      false  
+     1510    151  Default            [24]5.000000[/24]      false  
+     1000    100  Default           [24]15.000000[/24]      false  
+    15080    150  Default           [24]16.000000[/24]      false  
+     1001    100  Default           [24]20.000000[/24]      false  
+     1002    100  Default           [24]50.000000[/24]      false  
+   150120    150  Default           [24]24.000000[/24]      false  
+     1003    100  Default          [24]100.000000[/24]      false  
+     1004    100  Default          [24]250.000000[/24]      false  
+     1005    100  Default          [24]500.000000[/24]      false  
+     1006    100  Default         [24]1000.000000[/24]      false  
+     1007    100  Default         [24]2000.000000[/24]      false  
+     1008    100  Default         [24]5000.000000[/24]      false  
+    70001  70000  Default        [24]161061273600[/24]      false  
+   150130    150  Default           [24]26.000000[/24]      false  
+     1520    152  Default            [24]5.000000[/24]      false  
+    15090    150  Default           [24]18.000000[/24]      false  
+    70002  70000  Default        [24]153687091200[/24]      false  
+     1530    153  Default            [24]5.000000[/24]      false  
+   150140    150  Default           [24]28.000000[/24]      false
+  Offers:
+   ID     Offer type  Start date/time  Expiry date/time  Enabled  PAM relative dates  
+   -----  ----------  ---------------  ----------------  -------  ------------------  
+       6     Account       2024-01-09        2025-03-26      Yes                  No  
+       7     Account   Always started         No expiry      Yes                  No  
+     313     Account       2024-08-28         No expiry      Yes                  No  
+    8063     Account       2024-09-30         No expiry      Yes                  No  
+    8064     Account       2024-09-30         No expiry      Yes                  No  
+   60008     Account       2025-02-10         No expiry      Yes                  No
+  Dynamic discounts: No available discounts
+   Selected Offers:
+   ID  [DA IDs]  Include Main  Rule  Resource Facing Service  Major Priority  Minor Priority  
+   --  --------  ------------  ----  -----------------------  --------------  --------------
+
+ Context specific information: 
+  Charging context: Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org
+  Service identifier: 1000
+  Call setup result: Result NOT supplied
+  Subscription-Id-Address: [1]56009243[/1]
+  Subscription-Id-IMSI-Address: [2]605019800000243[/2]
+  Ericsson-Location-MCC-MNC: [4]60501[/4]
+  GGSN-Address: 197.26.21.81
+  Ericsson-Geo-Location-ECI: [4]01870508[/4]
+  3GPP-Charging-Characteristics: 0800
+  Pre-emption-Vulnerability: 1 - Pre-emption vulnerability disabled
+  APN-Aggregate-Max-Bitrate-DL: 30720000
+  3GPP-PDP-Type: 0 - IPv4
+  Ericsson-Geo-Location-Tracking-Area-Code: [4]271C[/4]
+  APN-Aggregate-Max-Bitrate-UL: 15360000
+  3GPP-IMSI-MCC-MNC: 60501
+  PDP-Address: 197.26.19.50
+  SGSN-Address: 197.26.21.80
+  3GPP-Selection-Mode: 0
+  User-Equipment-Info-IMEISV: [6]8658400701235101[/6]
+  3GPP-SGSN-MCC-MNC: 60501
+  3GPP-RAT-Type: 6 - EUTRAN
+  3GPP-Charging-Id: 248649306
+  3GPP-NSAPI: 6
+  Called-Station-Id: keygp.vtest
+  QoS-Class-Identifier: 141
+  Priority-Level: 13
+  Pre-emption-Capability: 0 - Pre-emption capability enabled
+  3GPP-GGSN-MCC-MNC: 60501
+  Rating-Group: 1000
+
+*** Reserve ***
+ Units to rate:
+Volume total : [24]1048576000[/24] of [24]1048576000[/24]. Units already paid for: [24]0[/24]
+Volume input : [24]-1[/24] of [24]-1[/24]. Units already paid for: [24]0[/24]
+Volume output : [24]-1[/24] of [24]-1[/24]. Units already paid for: [24]0[/24]
+
+
+
+ ========================================== [Rate Flybox test 5G B2C Gaming]
+  ========================================== [OfferDrivenRating]
+  ========================================== [Go To Voice SVA]
+   ========================================== [HPLMN]
+    1? <FALSE> NumberSeries : Subscription-Id-Location([VALUE NOT FOUND]) is found in series
+   ========================================== [LTE TDD B2C]
+    1? <TRUE> ShortNumberList : Service class(650) is found in list
+    ========================================== [VoIP]
+     1? <FALSE> ULong : Service identifier(1000) = 40
+  ========================================== [Go To international]
+   ========================================== [HPLMN]
+    1? <FALSE> NumberSeries : Subscription-Id-Location([VALUE NOT FOUND]) is found in series
+  ========================================== [BuyOption]
+   1? <FALSE> Using AND on the result from all children.
+    1? <FALSE> ShortNumberList : Service class(650) is found in list
+    2? <FALSE> String : Charging context ID("Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org") equals (case sensitive) "SCAP_V.2.0@ericsson.com"
+    3? <FALSE> ULong : Service identifier(1000) = 41
+  ========================================== [Payment GW]
+   1? <FALSE> ULong : Service identifier(1000) = 16
+  ========================================== [Transfert Data]
+   1? <FALSE> Using AND on the result from all children.
+    1? <FALSE> ULong : Service identifier(1000) = 20
+    2? <FALSE> String : Charging context ID("Ericsson_OCS_V1_0.0.0.10.32251@3gpp.org") equals (case sensitive) "SCAP_V.2.0@ericsson.com"
+  ========================================== [Free Data]
+   1? <FALSE> CompareField : FreeData(0) = 1
+  ========================================== [LTE/5G TDD B2C]
+   1? <TRUE> ShortNumberList : Service class(650) is found in list
+   ========================================== [VOIP]
+    1? <FALSE> ULong : Service identifier(1000) = 40
+   ========================================== [Data MBC]
+    1? <TRUE> Using OR on the result from all children.
+     1? <FALSE> String : Called-Station-Id("keygp.vtest") begins with (case sensitive) "DATA.LTE.TDD"
+     2? <TRUE> The list of Offer IDs was a match to the list in Rating Data
+     3? <FALSE> The list of Offer IDs was  NOT a match to the list in Rating Data
+     4? <FALSE> The list of Offer IDs was  NOT a match to the list in Rating Data
+    ========================================== [HPLMN]
+     1? <TRUE> NumberSeries : 3GPP-SGSN-MCC-MNC(60501) is found in series
+     ========================================== [Charged]
+      1? <TRUE> Using AND on the result from all children.
+       1? <TRUE> ULong : Service identifier(1000) >= 1000
+       2? <TRUE> ULong : Service identifier(1000) <= 1999
+      ========================================== [Suspended Subscriber]
+       1? <FALSE> The list of Offer IDs was  NOT a match to the list in Rating Data
+      == INVERTED ============================== [Not suspended Subscriber]
+       1? <FALSE> The list of Offer IDs was  NOT a match to the list in Rating Data
+       ========================================== [Charged]
+        ========================================== [BOX 5G B2C]
+         1? <TRUE> The list of Offer IDs was a match to the list in Rating Data
+         ========================================== [Data usage]
+          1? <TRUE> UsageCounter 200.0 (2199023225405.000000) is below UsageThreshold 2009 * Value % (2199023255552.00)
+          1? Partial charging interval allowed: False
+          1? Session termination: False
+          1! Modifier for Volume Total unit.
+          1!            Price=0.0 / 1 byte(s). Interval=1. Price factor=1.0
+          1!            Volume Total max remaining units: 1048576000. Money left: 17
+          1!            Volume total: 30147. Volume input: 0, Volume output: 0
+          1!            Cost: 0  Accumulated cost: 0
+          1!            Accumulator delta: 10:0
+          1!            UsageCounter(s)= [Id:Delta, NominalDelta, Factor]= Id200:30147.0, 30147, 1.0
+          2? <FALSE> UsageCounter 200.0 (2199023255552.000000) is NOT below UsageThreshold 2009 * Value % (2199023255552.00)
+          2? Partial charging interval allowed: False
+          2? Session termination: False
+         2! Call setup code: TerminateSession (3)
+         2! -Ending execution.
+
+Result:
+Total cost: [24]0.0[/24]
+Allocation made to MA: [24]0.000000[/24]
+Allocation made to DA(s): 
+Total Non-Monetary units: [24]0[/24]
+Allocated Non-Monetary DA: 
+Rated Volume units,  total: [24]30147[/24], input: [24]0[/24], output: [24]0[/24]
+Remaining Volume, total: [24]1048545853[/24]([24]1048545853[/24]), input: [24]-1[/24]([24]-1[/24]), output: [24]-1[/24]([24]-1[/24]) -Incomplete rated units!
+Accumulator values: 10:0  ( Delta : 0, Total delta : 0 ) 
+Changed Usage Counters:
+   ID   Prod. ID  Delta           Nominal delta   Value                   Nominal value   
+   ---  --------  --------------  --------------  ----------------------  --------------  
+   200         0  [24]30147[/24]  [24]30147[/24]  [24]2199023255552[/24]  [24]30147[/24]
+
+Used offers: [60008]
+Selected offers used in rating: []
+
+Parameters that were changed:
+
+Duration to closest time switch: No timeswitch
+
+Output Fields
+
+Output Tree defined variables
+OpenCodeNotif = 1
+usageVoix = 0
+VolumeInput = 0
+VolumeOutput = 0
+FreeData = 0
+

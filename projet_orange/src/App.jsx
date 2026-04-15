@@ -26,17 +26,22 @@ import { useContext, useState } from 'react';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { currentUser, isTokenExpired } = useContext(AuthContext);
-  
-  // 🔧 DEVELOPMENT MODE: Temporarily disable authentication
-  // Comment out the lines below when you want to enable authentication again
+  if (!currentUser || !currentUser.email || isTokenExpired()) {
+    return <Navigate to="/login" replace />;
+  }
   return children;
-  
-  // ✅ PRODUCTION MODE: Uncomment these lines for real authentication
-  // Check if user is logged in and token is not expired
-  // if (!currentUser || !currentUser.email || isTokenExpired()) {
-  //   return <Navigate to="/login" replace />;
-  // }
-  // return children;
+};
+
+// Admin-only Route Component
+const AdminRoute = ({ children }) => {
+  const { currentUser, isTokenExpired } = useContext(AuthContext);
+  if (!currentUser || !currentUser.email || isTokenExpired()) {
+    return <Navigate to="/login" replace />;
+  }
+  if (currentUser.class?.toUpperCase() !== 'ADMIN') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return children;
 };
 
 // Layout Component for dashboard pages
@@ -224,15 +229,15 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/user-management" 
+          <Route
+            path="/user-management"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <UserManagement />
                 </DashboardLayout>
-              </ProtectedRoute>
-            } 
+              </AdminRoute>
+            }
           />
           <Route
             path="/profile"
@@ -247,11 +252,11 @@ function App() {
           <Route
             path="/admin/logs"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <DashboardLayout>
                   <SystemLogs />
                 </DashboardLayout>
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
           

@@ -13,6 +13,8 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:5000',
       '/users': 'http://localhost:5000',
+      '/admin': 'http://localhost:5000',
+      '/help': 'http://localhost:5000',
       '/serialnumber': 'http://localhost:5000',
       '/activationcode': 'http://localhost:5000',
     }

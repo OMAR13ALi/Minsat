@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const Usage = () => {
   // Usage Counter Data
@@ -15,9 +16,7 @@ const Usage = () => {
   useEffect(() => {
   const fetchUsage = async () => {
     try {
-      const res = await fetch('http://localhost:5000/help/uc');
-      const data = await res.json(); // ✅ parse la réponse JSON
-
+      const { data } = await axios.get('/help/uc');
       setUsageCounterData(data);
       setUsageCounterState(prev => ({ ...prev, filteredData: data }));
     } catch (err) {

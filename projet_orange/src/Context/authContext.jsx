@@ -4,7 +4,7 @@ import axios from "axios";
 // Attach JWT to every outgoing request
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -18,9 +18,9 @@ axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("currentUser");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("currentUser");
       window.location.href = "/login";
     }
     return Promise.reject(error);
@@ -32,15 +32,15 @@ export const AuthContext = createContext();
 // eslint-disable-next-line react/prop-types
 export const AuthContextProvider = ({ children }) => {
   const initialCurrentUser =
-    JSON.parse(localStorage.getItem("currentUser")) || {};
+    JSON.parse(sessionStorage.getItem("currentUser")) || {};
   const [currentUser, setCurrentUser] = useState(initialCurrentUser);
 
   useEffect(() => {
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
   }, [currentUser]);
 
   const isTokenExpired = () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       return true;
     }
